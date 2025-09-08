@@ -270,7 +270,7 @@ function resetGame() {
       const it=items[i]; it.x-=it.speed;
       if(it.x+it.width<0){items.splice(i,1);continue;}
       if(isColliding(player,it)){
-        score+=it.type==="food"?5:2; 
+        score+=it.type==="food"?50:2; 
         playSound(it.type === "food" ? sounds.eat : sounds.drink, 0.7);
       items.splice(i,1);}    
     }
