@@ -50,46 +50,43 @@
     introImages.push(img);
   });
 
-
-
   // sound manager
   const sounds = {
     startScreen: {
       audio: new Audio('start_screen.mp3'),
       volume: 0.4 // adjust this as needed
     },
-  buttonClick: {
+    buttonClick: {
       audio: new Audio('button_clicks.mp3'),
       volume: 0.4 
     },
-  gameBG: {
+    gameBG: {
       audio: new Audio('game_BG.mp3'),
       volume: 0.4 
     },
-  eat: {
+    eat: {
       audio: new Audio('eat.mp3'),
       volume: 0.4 
     },
-  drink: {
+    drink: {
       audio: new Audio('drink.mp3'),
       volume: 0.4 
     },
-  explosion: {
+    explosion: {
       audio: new Audio('explosion.mp3'),
       volume: 0.4 
     },
-  ending: {
+    ending: {
       audio: new Audio('ending.mp3'),
       volume: 0.4 
     }
   };
 
-// loop background music
-sounds.startScreen.audio.loop = true;
-sounds.gameBG.audio.loop = true;
+  // loop background music
+  sounds.startScreen.audio.loop = true;
+  sounds.gameBG.audio.loop = true;
 
-
-    // helpers
+  // helpers
   function playSound(soundEntry, overrideVolume = null) {
     if (!soundEntry || !soundEntry.audio) return;
     const snd = soundEntry.audio;
@@ -109,19 +106,19 @@ sounds.gameBG.audio.loop = true;
   let state = "intro";  // possible values: "intro", "start", "play", "gameover"
 
   let selectedPlayer = null, playerImg = null;
-  let bgX, score, level, scrollSpeed, player, keys, items, enemies;
+  let bgX, score, level, scrollSpeed, player, keys, items = [], enemies = [];
   let characterBounds = [];
   let explosion = { x: 0, y: 0, visible: false, timer: 0 };
   let playButtonBounds = null;
   let levelBanner = null;
 
-function resetGame() {
-  bgX = 0; score = 0; level = 1; scrollSpeed = 4;
-  keys = {}; items = []; enemies = [];
- 
+  function resetGame() {
+    bgX = 0; score = 0; level = 1; scrollSpeed = 4;
+    keys = {}; items = []; enemies = [];
+
     const playerWidth = canvas.width * 0.08;
     player = { x:100, y:canvas.height/2, width:playerWidth, height:playerWidth, speed:8, lives:3 };
-    
+
     explosion.visible = false;
     explosion.timer = 0;
     explosion.x = 0;
@@ -134,53 +131,46 @@ function resetGame() {
     // reset HS prompt flag 
     drawGameOver._didHS = false;
     levelBanner = null; 
-
-
-}
-
-  function drawIntroScreen() {
-  // draw background
-  ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
-
-  if (introImages.length > 0) {
-    let gap = 30; // spacing between panels
-    let totalWidth = introImages.length * (canvas.height * (introImages[0].width / introImages[0].height)) + (introImages.length - 1) * gap;
-
-    // scale all panels so they fit height of canvas
-    let panelHeight = canvas.height * 0.7; 
-    let panelWidth = introImages[0].width * (panelHeight / introImages[0].height);
-
-    // starting x to center all panels
-    let startX = (canvas.width - (panelWidth * introImages.length + gap * (introImages.length - 1))) / 2;
-    let y = canvas.height * 0.1;
-
-    // draw panels
-    introImages.forEach((img, i) => {
-      let x = startX + i * (panelWidth + gap);
-      ctx.drawImage(img, x, y, panelWidth, panelHeight);
-    });
   }
 
-  // draw play button
-  let btnW = 200, btnH = 60;
-  let btnX = (canvas.width - btnW) / 2;
-  let btnY = canvas.height - btnH - 40;
+  function drawIntroScreen() {
+    // draw background
+    ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = "#222";
-  ctx.fillRect(btnX, btnY, btnW, btnH);
-  ctx.strokeStyle = "#fff";
-  ctx.lineWidth = 3;
-  ctx.strokeRect(btnX, btnY, btnW, btnH);
+    if (introImages.length > 0) {
+      let gap = 30; // spacing between panels
+      let panelHeight = canvas.height * 0.7; 
+      let panelWidth = introImages[0].width * (panelHeight / introImages[0].height);
+      let startX = (canvas.width - (panelWidth * introImages.length + gap * (introImages.length - 1))) / 2;
+      let y = canvas.height * 0.1;
 
-  ctx.fillStyle = "#fff";
-  ctx.font = "30px Arial";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("PLAY", btnX + btnW/2, btnY + btnH/2);
+      // draw panels
+      introImages.forEach((img, i) => {
+        let x = startX + i * (panelWidth + gap);
+        ctx.drawImage(img, x, y, panelWidth, panelHeight);
+      });
+    }
 
-  // store button bounds for click detection
-  playButtonBounds = { x: btnX, y: btnY, w: btnW, h: btnH };
-}
+    // draw play button
+    let btnW = 200, btnH = 60;
+    let btnX = (canvas.width - btnW) / 2;
+    let btnY = canvas.height - btnH - 40;
+
+    ctx.fillStyle = "#222";
+    ctx.fillRect(btnX, btnY, btnW, btnH);
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(btnX, btnY, btnW, btnH);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "30px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("PLAY", btnX + btnW/2, btnY + btnH/2);
+
+    // store button bounds for click detection
+    playButtonBounds = { x: btnX, y: btnY, w: btnW, h: btnH };
+  }
 
   function drawBackground(){
     ctx.drawImage(bgImage,bgX,0,canvas.width,canvas.height);
@@ -193,6 +183,7 @@ function resetGame() {
   }
 
   function updatePlayer(){
+    if (!player) return;
     if (keys["ArrowUp"] && player.y > 0) player.y -= player.speed;
     if (keys["ArrowDown"] && player.y + player.height < canvas.height) player.y += player.speed;
     if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
@@ -200,10 +191,13 @@ function resetGame() {
   }
 
   function drawPlayer(){
+    // Guard: don't try to draw if we don't have a playerImg yet
+    if (!playerImg || !player) return;
     const playerWidth = canvas.width * 0.08;
-    const aspect = playerImg.height / playerImg.width;
+    // Also guard in case image hasn't loaded dimensions yet
+    const aspect = (playerImg.height && playerImg.width) ? (playerImg.height / playerImg.width) : 1;
     const playerHeight = playerWidth * aspect;
-    
+
     if (player.flashCount === 0 || player.flashVisible) {
       ctx.drawImage(playerImg, player.x, player.y, playerWidth, playerHeight);
     }
@@ -213,10 +207,10 @@ function resetGame() {
   }
 
   function spawnItem(){
-  const pool = [
-    ...foodImgs.map(img => ({ img, type:"food" })),
-    ...drinkImgs.map(img => ({ img, type:"drink" }))
-  ];
+    const pool = [
+      ...foodImgs.map(img => ({ img, type:"food" })),
+      ...drinkImgs.map(img => ({ img, type:"drink" }))
+    ];
     const count = 1 + Math.floor(Math.random()*3); 
     for (let n=0;n<count;n++) {
       const choice = pool[Math.floor(Math.random()*pool.length)];
@@ -231,15 +225,14 @@ function resetGame() {
         width = height * (choice.img.width / choice.img.height);
       }
       items.push({
-  type: choice.type,
-  x: canvas.width + n * 50,
-  y: Math.random() * (canvas.height - height),
-  width: width,
-  height: height,
-  img: choice.img,
-  speed: scrollSpeed + 2 + level * 0.5
-});
-
+        type: choice.type,
+        x: canvas.width + n * 50,
+        y: Math.random() * (canvas.height - height),
+        width: width,
+        height: height,
+        img: choice.img,
+        speed: scrollSpeed + 2 + level * 0.5
+      });
     }
   }
 
@@ -269,10 +262,11 @@ function resetGame() {
     for(let i=items.length-1;i>=0;i--){
       const it=items[i]; it.x-=it.speed;
       if(it.x+it.width<0){items.splice(i,1);continue;}
-      if(isColliding(player,it)){
+      if(player && isColliding(player,it)){
         score+=it.type==="food"?5:2; 
         playSound(it.type === "food" ? sounds.eat : sounds.drink, 0.7);
-      items.splice(i,1);}    
+        items.splice(i,1);
+      }    
     }
   }
 
@@ -297,7 +291,7 @@ function resetGame() {
         continue;
       }
 
-      if (!player.flashActive && isColliding(player, e)) {
+      if (player && !player.flashActive && isColliding(player, e)) {
         player.lives--;
         explosion.x = player.x;
         explosion.y = player.y;
@@ -337,6 +331,7 @@ function resetGame() {
   }
 
   function drawHUD(){
+    if (!player) return;
     ctx.save();
     ctx.fillStyle='white';
     const fontSize = Math.max(canvas.height*0.025,16);
@@ -354,60 +349,56 @@ function resetGame() {
     ctx.fillText('Score: '+score,x,y);
     ctx.restore();
   }
-function updateAndDrawLevelBanner() {
-  if (!levelBanner) return;
 
-  ctx.save();
-  ctx.fillStyle = "yellow";
-  ctx.font = levelBanner.fontSize + "px Arial Black";
-  ctx.textAlign = "left";
-  ctx.textBaseline = "middle";
+  function updateAndDrawLevelBanner() {
+    if (!levelBanner) return;
 
-  ctx.fillText(levelBanner.text, levelBanner.x, levelBanner.y);
+    ctx.save();
+    ctx.fillStyle = "yellow";
+    ctx.font = levelBanner.fontSize + "px Arial Black";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
 
-  // move towards target
-  if (levelBanner.x > levelBanner.targetX) {
-    levelBanner.x -= levelBanner.speed;
-    if (levelBanner.x <= levelBanner.targetX) {
-      levelBanner.x = levelBanner.targetX;
-      // vanish after short delay
-      setTimeout(() => {
-        levelBanner = null;
-        // resume spawning now
-        let itemRate = Math.max(800, 2000 - level * 100);
-        let enemyRate = Math.max(1000, 3000 - level * 130);
-              }, 1000); // 1 second pause at center
+    ctx.fillText(levelBanner.text, levelBanner.x, levelBanner.y);
+
+    // move towards target
+    if (levelBanner.x > levelBanner.targetX) {
+      levelBanner.x -= levelBanner.speed;
+      if (levelBanner.x <= levelBanner.targetX) {
+        levelBanner.x = levelBanner.targetX;
+        // vanish after short delay
+        setTimeout(() => {
+          levelBanner = null;
+          // (spawning handled by frame counters in loop)
+        }, 1000); // 1 second pause at center
+      }
     }
+    ctx.restore();
   }
-  ctx.restore();
-}
-
 
   function checkLevelUp() {
-  const newLevel = Math.floor(score / 100) + 1;
-  if (newLevel > level) {
-    level = newLevel;
-    scrollSpeed = 3 + (level - 1) * 1.2;
+    const newLevel = Math.floor(score / 100) + 1;
+    if (newLevel > level) {
+      level = newLevel;
+      scrollSpeed = 3 + (level - 1) * 1.2;
 
-    // create a banner
-    const text = "LEVEL " + level;
-    const fontSize = Math.max(canvas.height * 0.15, 48);
-    ctx.font = fontSize + "px Arial Black"; // measure using same font
-    const textWidth = ctx.measureText(text).width;
+      // create a banner
+      const text = "LEVEL " + level;
+      const fontSize = Math.max(canvas.height * 0.15, 48);
+      ctx.font = fontSize + "px Arial Black"; // measure using same font
+      const textWidth = ctx.measureText(text).width;
 
-    levelBanner = {
-      text,
-      fontSize,
-      x: canvas.width, // start offscreen
-      y: canvas.height / 2,
-      targetX: (canvas.width - textWidth) / 2,
-      speed: scrollSpeed, // now matches world scroll
-      done: false
-    };
+      levelBanner = {
+        text,
+        fontSize,
+        x: canvas.width, // start offscreen
+        y: canvas.height / 2,
+        targetX: (canvas.width - textWidth) / 2,
+        speed: scrollSpeed, // now matches world scroll
+        done: false
+      };
+    }
   }
-}
-
-
 
   const characters=[
     {img:sheepImg,label:"Baa",name:"sheep"},
@@ -447,54 +438,51 @@ function updateAndDrawLevelBanner() {
   }
 
   function drawGameOver() {
-  drawBackground();
-  updateBackground(); // keep scrolling
+    drawBackground();
+    updateBackground(); // keep scrolling
 
-  if (!gameOverAnim) {
-    // initialize once
-    gameOverAnim = {
-      scale: 0.1,
-      target: 1.5,
-      speed: 0.02,
-      done: false,
-      timer: 0
-    };
-    stopSound(sounds.gameBG);
-    playSound(sounds.ending, 0.8);
-  }
-
-  // if animation finished + enough delay, don’t draw text anymore
-  if (gameOverAnim.done && gameOverAnim.timer > 120) {
-    return;
-  }
-
-  if (!gameOverAnim.done) {
-    gameOverAnim.scale += gameOverAnim.speed;
-    if (gameOverAnim.scale >= gameOverAnim.target) {
-      gameOverAnim.scale = gameOverAnim.target;
-      gameOverAnim.done = true;
+    if (!gameOverAnim) {
+      // initialize once
+      gameOverAnim = {
+        scale: 0.1,
+        target: 1.5,
+        speed: 0.02,
+        done: false,
+        timer: 0
+      };
+      stopSound(sounds.gameBG);
+      playSound(sounds.ending, 0.8);
     }
-  } else {
-    gameOverAnim.timer++;
-    if (gameOverAnim.timer > 120 && !drawGameOver._didHS) { // ~2s after zoom
-      checkAndSaveHighScore(score);
-      drawGameOver._didHS = true;
+
+    // if animation finished + enough delay, don’t draw text anymore
+    if (gameOverAnim.done && gameOverAnim.timer > 120) {
+      return;
     }
+
+    if (!gameOverAnim.done) {
+      gameOverAnim.scale += gameOverAnim.speed;
+      if (gameOverAnim.scale >= gameOverAnim.target) {
+        gameOverAnim.scale = gameOverAnim.target;
+        gameOverAnim.done = true;
+      }
+    } else {
+      gameOverAnim.timer++;
+      if (gameOverAnim.timer > 120 && !drawGameOver._didHS) { // ~2s after zoom
+        checkAndSaveHighScore(score);
+        drawGameOver._didHS = true;
+      }
+    }
+
+    // draw zoom text
+    ctx.save();
+    ctx.fillStyle = "red";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const baseSize = Math.max(canvas.height * 0.12, 48);
+    ctx.font = `${baseSize * gameOverAnim.scale}px Arial Black`;
+    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
+    ctx.restore();
   }
-
-  // draw zoom text
-  ctx.save();
-  ctx.fillStyle = "red";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  const baseSize = Math.max(canvas.height * 0.12, 48);
-  ctx.font = `${baseSize * gameOverAnim.scale}px Arial Black`;
-  ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
-  ctx.restore();
-}
-
-
-
 
   // === HIGH SCORE HELPERS ===
   function qualifiesForHighScore(s){
@@ -503,183 +491,174 @@ function updateAndDrawLevelBanner() {
     return s > (highScores[highScores.length-1]?.score || 0);
   }
 
-function checkAndSaveHighScore(finalScore){
-  if (!qualifiesForHighScore(finalScore)) return;
+  function checkAndSaveHighScore(finalScore){
+    if (!qualifiesForHighScore(finalScore)) return;
 
-  // character label (avoid duplicate 'char' declarations)
-  const charLabel = selectedPlayer != null ? characters[selectedPlayer].label.toUpperCase() : "-";
+    // character label (avoid duplicate 'char' declarations)
+    const charLabel = selectedPlayer != null ? characters[selectedPlayer].label.toUpperCase() : "-";
 
-  // find insert position (so entries below shift down)
-  let insertIndex = highScores.findIndex(e => finalScore > e.score);
-  if (insertIndex === -1) insertIndex = highScores.length;
+    // find insert position (so entries below shift down)
+    let insertIndex = highScores.findIndex(e => finalScore > e.score);
+    if (insertIndex === -1) insertIndex = highScores.length;
 
-  // insert placeholder entry (empty name) and trim to MAX
-  const newEntry = { score: finalScore, name: "", char: charLabel };
-  highScores.splice(insertIndex, 0, newEntry);
-  highScores.splice(MAX_HIGH_SCORES);
+    // insert placeholder entry (empty name) and trim to MAX
+    const newEntry = { score: finalScore, name: "", char: charLabel };
+    highScores.splice(insertIndex, 0, newEntry);
+    highScores.splice(MAX_HIGH_SCORES);
 
-  // start editing that new entry (cursor state)
-  drawHighScoreConsole._editingIndex = insertIndex;
-  drawHighScoreConsole._cursorVisible = true;
-  drawHighScoreConsole._cursorTimer = 0;
-
-  
-}
-
-function resetHighScoreEditing() {
-  drawHighScoreConsole._editingIndex = null;
-  drawHighScoreConsole._cursorVisible = false;
-  drawHighScoreConsole._cursorTimer = 0;
-}
-
-
-
-function drawHighScoreConsole(){
-  const W = canvas.width * 0.35;
-  const H = canvas.height * 0.8;
-  const X = (canvas.width - W) / 2; 
-  const Y = (canvas.height - H) / 2; 
-
-  ctx.save();
-  // Panel background
-  ctx.globalAlpha = 0.88;
-  ctx.fillStyle = "#050a0a";
-  ctx.fillRect(X, Y, W, H);
-
-  // Border glow
-  ctx.globalAlpha = 1;
-  ctx.strokeStyle = "#00ff99";
-  ctx.lineWidth = Math.max(3, canvas.width*0.003);
-  ctx.shadowColor = "#00ff99";
-  ctx.shadowBlur = 12;
-  ctx.strokeRect(X, Y, W, H);
-  ctx.shadowBlur = 0;
-
-  // Fake scanlines
-  ctx.globalAlpha = 0.08;
-  ctx.fillStyle = "#00ff99";
-  for (let yy = Y+30; yy < Y+H-20; yy += 4) {
-    ctx.fillRect(X+10, yy, W-20, 1);
+    // start editing that new entry (cursor state)
+    drawHighScoreConsole._editingIndex = insertIndex;
+    drawHighScoreConsole._cursorVisible = true;
+    drawHighScoreConsole._cursorTimer = 0;
   }
-  ctx.globalAlpha = 1;
 
-  // Header
-  ctx.fillStyle = "#00ff99";
-  ctx.font = Math.max(18, canvas.height * 0.03) + "px monospace";
-  ctx.textAlign = "center";
-  const headerTop = Y + H * 0.04;
-  ctx.fillText("HIGH SCORES", X + W / 2, headerTop);
+  function resetHighScoreEditing() {
+    drawHighScoreConsole._editingIndex = null;
+    drawHighScoreConsole._cursorVisible = false;
+    drawHighScoreConsole._cursorTimer = 0;
+  }
 
-  // Column headers
-  const headerY = Y + H * 0.09;
-  ctx.font = Math.max(14, canvas.height * 0.022) + "px monospace";
-  const rankLeft = X + W * 0.10;
-  const charLeft = X + W * 0.20;
-  const scoreLeft = X + W * 0.40;
-  const nameLeft  = X + W * 0.55;
-  ctx.textAlign = "left";
-  ctx.fillText("RANK", rankLeft, headerY);
-  ctx.fillText("CHARACTER", charLeft, headerY);
-  ctx.fillText("SCORE", scoreLeft, headerY);
-  ctx.fillText("NAME", nameLeft, headerY);
+  function drawHighScoreConsole(){
+    const W = canvas.width * 0.35;
+    const H = canvas.height * 0.8;
+    const X = (canvas.width - W) / 2; 
+    const Y = (canvas.height - H) / 2; 
 
-  // Rows (single loop — includes editing)
-  const rowH = canvas.height * 0.04;
-  ctx.font = Math.max(16, canvas.height * 0.024) + "px monospace";
-  const rows = highScores.slice(0, MAX_HIGH_SCORES);
+    ctx.save();
+    // Panel background
+    ctx.globalAlpha = 0.88;
+    ctx.fillStyle = "#050a0a";
+    ctx.fillRect(X, Y, W, H);
 
-  for (let i = 0; i < rows.length; i++) {
-    const entry = rows[i];
-    const y = Y + H * 0.14 + i * rowH;
+    // Border glow
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = "#00ff99";
+    ctx.lineWidth = Math.max(3, canvas.width*0.003);
+    ctx.shadowColor = "#00ff99";
+    ctx.shadowBlur = 12;
+    ctx.strokeRect(X, Y, W, H);
+    ctx.shadowBlur = 0;
 
+    // Fake scanlines
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = "#00ff99";
+    for (let yy = Y+30; yy < Y+H-20; yy += 4) {
+      ctx.fillRect(X+10, yy, W-20, 1);
+    }
+    ctx.globalAlpha = 1;
+
+    // Header
+    ctx.fillStyle = "#00ff99";
+    ctx.font = Math.max(18, canvas.height * 0.03) + "px monospace";
+    ctx.textAlign = "center";
+    const headerTop = Y + H * 0.04;
+    ctx.fillText("HIGH SCORES", X + W / 2, headerTop);
+
+    // Column headers
+    const headerY = Y + H * 0.09;
+    ctx.font = Math.max(14, canvas.height * 0.022) + "px monospace";
+    const rankLeft = X + W * 0.10;
+    const charLeft = X + W * 0.20;
+    const scoreLeft = X + W * 0.40;
+    const nameLeft  = X + W * 0.55;
     ctx.textAlign = "left";
-    ctx.fillText(String(i + 1), rankLeft, y);
-    ctx.fillText(entry.char || "-", charLeft, y);
-    ctx.fillText(String(entry.score), scoreLeft, y);
+    ctx.fillText("RANK", rankLeft, headerY);
+    ctx.fillText("CHARACTER", charLeft, headerY);
+    ctx.fillText("SCORE", scoreLeft, headerY);
+    ctx.fillText("NAME", nameLeft, headerY);
 
-    if (drawHighScoreConsole._editingIndex === i) {
-      // editing row: show typed name + blinking cursor
-      let nameText = entry.name || "";
-      if (drawHighScoreConsole._cursorVisible) nameText += "_";
-      ctx.fillText(nameText, nameLeft, y);
-    } else {
-      ctx.fillText(entry.name || "-", nameLeft, y);
-    }
-  }
+    // Rows (single loop — includes editing)
+    const rowH = canvas.height * 0.04;
+    ctx.font = Math.max(16, canvas.height * 0.024) + "px monospace";
+    const rows = highScores.slice(0, MAX_HIGH_SCORES);
 
-  // Decorative knobs/buttons
-  const knob = (kx,ky,r,fill) => { ctx.beginPath(); ctx.fillStyle = fill; ctx.arc(kx,ky,r,0,Math.PI*2); ctx.fill(); ctx.closePath(); };
-  knob(X+22, Y+22, 8, "#ff3355");
-  knob(X+44, Y+22, 8, "#ffaa00");
-  knob(X+66, Y+22, 8, "#33ddff");
-  knob(X+W-22, Y+22, 8, "#66ff66");
-  knob(X+W-44, Y+22, 8, "#ff66ff");
-  knob(X+18, Y+H-18, 6, "#888");
-  knob(X+W-18, Y+H-18, 6, "#888");
+    for (let i = 0; i < rows.length; i++) {
+      const entry = rows[i];
+      const y = Y + H * 0.14 + i * rowH;
 
-  // Play Again button
-  const btnW = W * 0.4;
-  const btnH = H * 0.08;
-  const btnX = X + (W - btnW) / 2;
-  const btnY = Y + H - btnH - 30;
-  ctx.fillStyle = "#050a0a";
-  ctx.fillRect(btnX, btnY, btnW, btnH);
-  ctx.strokeStyle = "#00ff99";
-  ctx.lineWidth = 3;
-  ctx.strokeRect(btnX, btnY, btnW, btnH);
-  ctx.fillStyle = "#00ff99";
-  ctx.font = Math.max(18, canvas.height * 0.03) + "px monospace";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("PLAY AGAIN", btnX + btnW / 2, btnY + btnH / 2);
+      ctx.textAlign = "left";
+      ctx.fillText(String(i + 1), rankLeft, y);
+      ctx.fillText(entry.char || "-", charLeft, y);
+      ctx.fillText(String(entry.score), scoreLeft, y);
 
-  // save play-again bounds for clicks
-  drawHighScoreConsole._btn = { x: btnX, y: btnY, w: btnW, h: btnH };
-
-  // blinking cursor timer (advance only when editing)
-  if (drawHighScoreConsole._editingIndex != null) {
-    if (typeof drawHighScoreConsole._cursorTimer === "undefined") drawHighScoreConsole._cursorTimer = 0;
-    if (typeof drawHighScoreConsole._cursorVisible === "undefined") drawHighScoreConsole._cursorVisible = true;
-    drawHighScoreConsole._cursorTimer++;
-    if (drawHighScoreConsole._cursorTimer > 30) {
-      drawHighScoreConsole._cursorVisible = !drawHighScoreConsole._cursorVisible;
-      drawHighScoreConsole._cursorTimer = 0;
-    }
-  }
-
-  ctx.restore();
-}
-
-
-
-// --- Resume ONLY the background music (no rewinds) when the page/tab wakes ---
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) {
-    try {
-      const bg = sounds && sounds.gameBG && sounds.gameBG.audio;
-      const start = sounds && sounds.startScreen && sounds.startScreen.audio;
-
-      if (state === "play" && bg && bg.paused) {
-        // resume in-game background music where it left off
-        bg.play().catch(()=>{});
+      if (drawHighScoreConsole._editingIndex === i) {
+        // editing row: show typed name + blinking cursor
+        let nameText = entry.name || "";
+        if (drawHighScoreConsole._cursorVisible) nameText += "_";
+        ctx.fillText(nameText, nameLeft, y);
+      } else {
+        ctx.fillText(entry.name || "-", nameLeft, y);
       }
-
-      if (state === "start" && start && start.paused) {
-        // resume start-screen music (don't rewind)
-        start.play().catch(()=>{});
-      }
-    } catch (e) {
-      // ignore any errors
     }
+
+    // Decorative knobs/buttons
+    const knob = (kx,ky,r,fill) => { ctx.beginPath(); ctx.fillStyle = fill; ctx.arc(kx,ky,r,0,Math.PI*2); ctx.fill(); ctx.closePath(); };
+    knob(X+22, Y+22, 8, "#ff3355");
+    knob(X+44, Y+22, 8, "#ffaa00");
+    knob(X+66, Y+22, 8, "#33ddff");
+    knob(X+W-22, Y+22, 8, "#66ff66");
+    knob(X+W-44, Y+22, 8, "#ff66ff");
+    knob(X+18, Y+H-18, 6, "#888");
+    knob(X+W-18, Y+H-18, 6, "#888");
+
+    // Play Again button
+    const btnW = W * 0.4;
+    const btnH = H * 0.08;
+    const btnX = X + (W - btnW) / 2;
+    const btnY = Y + H - btnH - 30;
+    ctx.fillStyle = "#050a0a";
+    ctx.fillRect(btnX, btnY, btnW, btnH);
+    ctx.strokeStyle = "#00ff99";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(btnX, btnY, btnW, btnH);
+    ctx.fillStyle = "#00ff99";
+    ctx.font = Math.max(18, canvas.height * 0.03) + "px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("PLAY AGAIN", btnX + btnW / 2, btnY + btnH / 2);
+
+    // save play-again bounds for clicks
+    drawHighScoreConsole._btn = { x: btnX, y: btnY, w: btnW, h: btnH };
+
+    // blinking cursor timer (advance only when editing)
+    if (drawHighScoreConsole._editingIndex != null) {
+      if (typeof drawHighScoreConsole._cursorTimer === "undefined") drawHighScoreConsole._cursorTimer = 0;
+      if (typeof drawHighScoreConsole._cursorVisible === "undefined") drawHighScoreConsole._cursorVisible = true;
+      drawHighScoreConsole._cursorTimer++;
+      if (drawHighScoreConsole._cursorTimer > 30) {
+        drawHighScoreConsole._cursorVisible = !drawHighScoreConsole._cursorVisible;
+        drawHighScoreConsole._cursorTimer = 0;
+      }
+    }
+
+    ctx.restore();
   }
-});
 
+  // --- Resume ONLY the background music (no rewinds) when the page/tab wakes ---
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      try {
+        const bg = sounds && sounds.gameBG && sounds.gameBG.audio;
+        const start = sounds && sounds.startScreen && sounds.startScreen.audio;
 
+        if (state === "play" && bg && bg.paused) {
+          // resume in-game background music where it left off
+          bg.play().catch(()=>{});
+        }
+
+        if (state === "start" && start && start.paused) {
+          // resume start-screen music (don't rewind)
+          start.play().catch(()=>{});
+        }
+      } catch (e) {
+        // ignore any errors
+      }
+    }
+  });
 
   function loop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    
     if (state === "intro") {
       drawIntroScreen();
 
@@ -690,22 +669,22 @@ document.addEventListener('visibilitychange', () => {
       drawBackground();
       updateBackground();
       updatePlayer();
-itemSpawnCounter++;
-enemySpawnCounter++;
 
-// adjust spawn rate based on level (in frames)
-const itemRate = Math.max(50, 200 - level * 5); 
-const enemyRate = Math.max(60, 300 - level * 5);
+      // frame-based spawning (device-proof)
+      itemSpawnCounter++;
+      enemySpawnCounter++;
 
-if (itemSpawnCounter >= itemRate) { 
-    spawnItem(); 
-    itemSpawnCounter = 0; 
-}
-if (enemySpawnCounter >= enemyRate) { 
-    spawnEnemy(); 
-    enemySpawnCounter = 0; 
-}
+      const itemRate = Math.max(50, 200 - level * 5); 
+      const enemyRate = Math.max(60, 300 - level * 5);
 
+      if (itemSpawnCounter >= itemRate) { 
+        spawnItem(); 
+        itemSpawnCounter = 0; 
+      }
+      if (enemySpawnCounter >= enemyRate) { 
+        spawnEnemy(); 
+        enemySpawnCounter = 0; 
+      }
 
       drawPlayer();
       updateItems();
@@ -715,7 +694,6 @@ if (enemySpawnCounter >= enemyRate) {
       drawHUD();
       checkLevelUp();
       updateAndDrawLevelBanner();
-
 
       if (explosion.visible) {
         const scale = 2; 
@@ -755,92 +733,253 @@ if (enemySpawnCounter >= enemyRate) {
       }
 
     } else if (state === "gameover") {
-  drawGameOver();
+      drawGameOver();
 
-  if (drawGameOver._didHS) {
-    drawHighScoreConsole();
-    drawHUD();
-  }
-}
-
+      if (drawGameOver._didHS) {
+        drawHighScoreConsole();
+        drawHUD();
+      }
+    }
 
     requestAnimationFrame(loop);
   }
 
-// ===== Joystick & Touch Handling (device-proof) =====
+  // ===== Joystick & Touch Handling (device-proof) =====
 
-const joystick = document.createElement("div");
-const stick = document.createElement("div");
-Object.assign(joystick.style, {
-  position: "absolute",
-  left: "20px",
-  bottom: "20px",
-  width: "120px",
-  height: "120px",
-  background: "rgba(255,255,255,0.3)",
-  borderRadius: "50%",
-  display: "none",
-  zIndex: 1000,
-  touchAction: "none"
-});
-Object.assign(stick.style, {
-  position: "absolute",
-  left: "50%",
-  top: "50%",
-  width: "50px",
-  height: "50px",
-  background: "rgba(255,255,255,0.8)",
-  borderRadius: "50%",
-  transform: "translate(-50%,-50%)",
-  touchAction: "none"
-});
-joystick.appendChild(stick);
-document.body.appendChild(joystick);
+  const joystick = document.createElement("div");
+  const stick = document.createElement("div");
+  Object.assign(joystick.style, {
+    position: "absolute",
+    left: "20px",
+    bottom: "20px",
+    width: "120px",
+    height: "120px",
+    background: "rgba(255,255,255,0.3)",
+    borderRadius: "50%",
+    display: "none",
+    zIndex: 1000,
+    touchAction: "none"
+  });
+  Object.assign(stick.style, {
+    position: "absolute",
+    left: "50%",
+    top: "50%",
+    width: "50px",
+    height: "50px",
+    background: "rgba(255,255,255,0.8)",
+    borderRadius: "50%",
+    transform: "translate(-50%,-50%)",
+    touchAction: "none"
+  });
+  joystick.appendChild(stick);
+  document.body.appendChild(joystick);
 
-let joyActive = false;
-let origin = { x: 0, y: 0 };
+  let joyActive = false;
 
-// === helper to get canvas-relative coords ===
-function getTouchPos(touch) {
-  const rect = canvas.getBoundingClientRect();
-  return {
-    x: touch.clientX - rect.left,
-    y: touch.clientY - rect.top
-  };
-}
+  // === helper to get canvas-relative coords ===
+  function getTouchPosOnCanvas(touch) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    };
+  }
 
-// Touch start
-canvas.addEventListener("touchstart", e=>{
-  if(state !== "play") return;
-  const t = e.touches[0];
-  origin = { x: t.clientX, y: t.clientY };
-  // joystick stays at bottom-left corner
-  joystick.style.left = `20px`;
-  joystick.style.bottom = `20px`;
-  joystick.style.display = "block";
-  joyActive = true;
-  e.preventDefault();
-}, { passive: false });
+  // helper to get joystick center in viewport coords
+  function getJoystickCenter() {
+    const r = joystick.getBoundingClientRect();
+    return { cx: r.left + r.width/2, cy: r.top + r.height/2 };
+  }
 
-canvas.addEventListener("touchmove", e=>{
-  if(!joyActive) return;
-  const t = e.touches[0];
-  const dx = t.clientX - (20 + 60); // 20px left + half joystick width
-  const dy = t.clientY - (window.innerHeight - (20 + 60)); // 20px bottom + half joystick height
-  const dist = Math.hypot(dx, dy);
-  const max = 50;
-  const ratio = dist>max ? max/dist : 1;
-  const rx = dx * ratio, ry = dy * ratio;
-  stick.style.transform = `translate(calc(-50% + ${rx}px), calc(-50% + ${ry}px))`;
-  player.x += (rx / max) * player.speed;
-  player.y += (ry / max) * player.speed;
-  e.preventDefault();
-}, { passive: false });
+  // Touch start (also used for mobile Play button etc)
+  canvas.addEventListener("touchstart", e=>{
+    // handle short-circuit for start/intro/gameover interactions below
+    const t = e.touches[0];
+    const pos = getTouchPosOnCanvas(t);
 
-canvas.addEventListener("touchend", e=>{
-  joyActive = false;
-  joystick.style.left = `20px`;
-  joystick.style.bottom = `20px`;
-  stick.style.transform = "translate(-50%,-50%)"; 
-  e.preventDefault();
-});
+    // If intro and play button tapped on mobile -> same behavior as click
+    if (state === "intro" && playButtonBounds) {
+      if (pos.x >= playButtonBounds.x && pos.x <= playButtonBounds.x + playButtonBounds.w &&
+          pos.y >= playButtonBounds.y && pos.y <= playButtonBounds.y + playButtonBounds.h) {
+        playSound(sounds.buttonClick);
+        stopSound(sounds.gameBG);
+        stopSound(sounds.ending);
+        playSound(sounds.startScreen, 0.5);
+        bgX = 0;
+        state = "start";
+        e.preventDefault();
+        return;
+      }
+    }
+
+    // If in start screen, check character pick
+    if (state === "start") {
+      for (const b of characterBounds) {
+        if (pos.x >= b.x && pos.x <= b.x+b.w && pos.y >= b.y && pos.y <= b.y+b.h) {
+          playSound(sounds.buttonClick);
+          selectedPlayer = b.index;
+          playerImg = characters[b.index].img;
+          setTimeout(()=>{
+            resetGame();
+            stopSound(sounds.startScreen);
+            playSound(sounds.gameBG, 0.6);
+            state = "play";
+            // spawning via frame counters will handle auto-spawn
+          },200);
+          e.preventDefault();
+          return;
+        }
+      }
+    }
+
+    // If in gameover and Play Again tapped
+    if (state === "gameover") {
+      const b = drawHighScoreConsole._btn;
+      if (b && pos.x >= b.x && pos.x <= b.x+b.w && pos.y >= b.y && pos.y <= b.y+b.h) {
+        playSound(sounds.buttonClick);
+        setTimeout(()=>{
+          resetGame();  
+          resetHighScoreEditing();
+          gameOverAnim = null;             
+          selectedPlayer = null;           
+          bgX = 0;
+          stopSound(sounds.gameBG);
+          playSound(sounds.startScreen, 0.5);
+          state = "start";  
+        }, 200);
+        e.preventDefault();
+        return;
+      }
+    }
+
+    // If we reach here and state is play -> start joystick
+    if (state !== "play") return;
+    const touch = e.touches[0];
+    // show joystick fixed at bottom-left
+    joystick.style.left = `20px`;
+    joystick.style.bottom = `20px`;
+    joystick.style.display = "block";
+    // reset stick to center visually
+    stick.style.transform = "translate(-50%,-50%)";
+    joyActive = true;
+    e.preventDefault();
+  }, { passive: false });
+
+  canvas.addEventListener("touchmove", e=>{
+    if(!joyActive) return;
+    const t = e.touches[0];
+    // compute delta relative to actual joystick center in viewport coords
+    const center = getJoystickCenter();
+    const dx = t.clientX - center.cx; // positive = right
+    const dy = t.clientY - center.cy; // positive = down
+    const dist = Math.hypot(dx, dy);
+    const max = (joystick.getBoundingClientRect().width/2) - (stick.getBoundingClientRect().width/2) - 2; // fit inside circle
+    const ratio = dist>max ? max/dist : 1;
+    const rx = dx * ratio, ry = dy * ratio;
+    // move the small stick visually
+    stick.style.transform = `translate(calc(-50% + ${rx}px), calc(-50% + ${ry}px))`;
+    // convert rx/ry into movement where full deflection = player.speed
+    if (player) {
+      player.x += (rx / max) * player.speed;
+      player.y += (ry / max) * player.speed;
+      // clamp player inside canvas
+      if (player.x < 0) player.x = 0;
+      if (player.y < 0) player.y = 0;
+      if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+      if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
+    }
+    e.preventDefault();
+  }, { passive: false });
+
+  canvas.addEventListener("touchend", e=>{
+    // release joystick
+    joyActive = false;
+    joystick.style.left = `20px`;
+    joystick.style.bottom = `20px`;
+    stick.style.transform = "translate(-50%,-50%)"; 
+    e.preventDefault();
+  }, { passive: false });
+
+  // Keep mouse click handler for desktop
+  canvas.addEventListener("click", e=>{
+    const mx = e.offsetX, my = e.offsetY;
+
+    if (state === "intro" && playButtonBounds) {
+      if (
+        mx >= playButtonBounds.x && mx <= playButtonBounds.x + playButtonBounds.w &&
+        my >= playButtonBounds.y && my <= playButtonBounds.y + playButtonBounds.h
+      ) {
+        playSound(sounds.buttonClick);
+        stopSound(sounds.gameBG);
+        stopSound(sounds.ending);
+        playSound(sounds.startScreen, 0.5);
+        bgX = 0;
+        state = "start";
+        return;
+      }
+    }
+
+    if (state === "start") {
+      for (const b of characterBounds) {
+        if (mx >= b.x && mx <= b.x+b.w && my >= b.y && my <= b.y+b.h) {
+          playSound(sounds.buttonClick);
+          selectedPlayer = b.index;
+          playerImg = characters[b.index].img;
+          setTimeout(()=>{
+            resetGame();
+            stopSound(sounds.startScreen);
+            playSound(sounds.gameBG, 0.6);
+            state = "play";
+            // frame-based spawning handles automatic spawning
+          },200);
+          break;
+        }
+      }
+    } 
+    else if (state === "gameover") {
+      const b = drawHighScoreConsole._btn;
+      if (b && mx >= b.x && mx <= b.x+b.w && my >= b.y && my <= b.y+b.h) {
+        playSound(sounds.buttonClick);
+        setTimeout(()=>{
+          resetGame();  
+          resetHighScoreEditing();
+          gameOverAnim = null;             
+          selectedPlayer = null;           
+          bgX = 0;
+          stopSound(sounds.gameBG);
+          playSound(sounds.startScreen, 0.5);
+          state = "start";  
+        }, 200);
+      }
+    }
+  });
+
+  // keyboard
+  window.addEventListener("keydown", e=>keys[e.key]=true);
+  window.addEventListener("keyup", e=>keys[e.key]=false);
+
+  // global editing key handler (only active when editing a high-score name)
+  window.addEventListener("keydown", function(e){
+    if (state === "gameover" && drawHighScoreConsole._editingIndex != null) {
+      e.preventDefault();
+      const idx = drawHighScoreConsole._editingIndex;
+      const entry = highScores[idx];
+      if (!entry) return;
+
+      if (e.key === "Backspace") {
+        entry.name = (entry.name || "").slice(0, -1);
+      } else if (e.key === "Enter") {
+        // finalize and save
+        drawHighScoreConsole._editingIndex = null;
+        resetHighScoreEditing(); 
+        try { localStorage.setItem("highScores", JSON.stringify(highScores)); } catch(_) {}
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+        // append character (uppercase), max 20 chars
+        if ((entry.name || "").length < 20) entry.name = (entry.name || "") + e.key.toUpperCase();
+      }
+    }
+  });
+
+  // start the loop
+  loop();
+})();
