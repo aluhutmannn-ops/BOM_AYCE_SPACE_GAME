@@ -106,7 +106,7 @@
   let state = "intro";  // possible values: "intro", "start", "play", "gameover"
 
   let selectedPlayer = null, playerImg = null;
-  let bgX, score, level, scrollSpeed, player, keys, items = [], enemies = [];
+  let bgX, score, level, scrollSpeed, player, keys, items, enemies;
   let characterBounds = [];
   let explosion = { x: 0, y: 0, visible: false, timer: 0 };
   let playButtonBounds = null;
@@ -115,10 +115,10 @@
   function resetGame() {
     bgX = 0; score = 0; level = 1; scrollSpeed = 4;
     keys = {}; items = []; enemies = [];
-
+   
     const playerWidth = canvas.width * 0.08;
     player = { x:100, y:canvas.height/2, width:playerWidth, height:playerWidth, speed:8, lives:3 };
-
+    
     explosion.visible = false;
     explosion.timer = 0;
     explosion.x = 0;
@@ -139,8 +139,13 @@
 
     if (introImages.length > 0) {
       let gap = 30; // spacing between panels
+      let totalWidth = introImages.length * (canvas.height * (introImages[0].width / introImages[0].height)) + (introImages.length - 1) * gap;
+
+      // scale all panels so they fit height of canvas
       let panelHeight = canvas.height * 0.7; 
       let panelWidth = introImages[0].width * (panelHeight / introImages[0].height);
+
+      // starting x to center all panels
       let startX = (canvas.width - (panelWidth * introImages.length + gap * (introImages.length - 1))) / 2;
       let y = canvas.height * 0.1;
 
@@ -183,7 +188,6 @@
   }
 
   function updatePlayer(){
-    if (!player) return;
     if (keys["ArrowUp"] && player.y > 0) player.y -= player.speed;
     if (keys["ArrowDown"] && player.y + player.height < canvas.height) player.y += player.speed;
     if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
@@ -191,13 +195,10 @@
   }
 
   function drawPlayer(){
-    // Guard: don't try to draw if we don't have a playerImg yet
-    if (!playerImg || !player) return;
     const playerWidth = canvas.width * 0.08;
-    // Also guard in case image hasn't loaded dimensions yet
-    const aspect = (playerImg.height && playerImg.width) ? (playerImg.height / playerImg.width) : 1;
+    const aspect = playerImg.height / playerImg.width;
     const playerHeight = playerWidth * aspect;
-
+    
     if (player.flashCount === 0 || player.flashVisible) {
       ctx.drawImage(playerImg, player.x, player.y, playerWidth, playerHeight);
     }
@@ -262,7 +263,7 @@
     for(let i=items.length-1;i>=0;i--){
       const it=items[i]; it.x-=it.speed;
       if(it.x+it.width<0){items.splice(i,1);continue;}
-      if(player && isColliding(player,it)){
+      if(isColliding(player,it)){
         score+=it.type==="food"?5:2; 
         playSound(it.type === "food" ? sounds.eat : sounds.drink, 0.7);
         items.splice(i,1);
@@ -291,7 +292,7 @@
         continue;
       }
 
-      if (player && !player.flashActive && isColliding(player, e)) {
+      if (!player.flashActive && isColliding(player, e)) {
         player.lives--;
         explosion.x = player.x;
         explosion.y = player.y;
@@ -331,7 +332,6 @@
   }
 
   function drawHUD(){
-    if (!player) return;
     ctx.save();
     ctx.fillStyle='white';
     const fontSize = Math.max(canvas.height*0.025,16);
@@ -369,7 +369,6 @@
         // vanish after short delay
         setTimeout(() => {
           levelBanner = null;
-          // (spawning handled by frame counters in loop)
         }, 1000); // 1 second pause at center
       }
     }
@@ -491,6 +490,75 @@
     return s > (highScores[highScores.length-1]?.score || 0);
   }
 
+  // Off-screen input helper and editing API
+  // window._hiddenNameInput will be reused across edits.
+  function startNameEdit(idx) {
+    if (typeof idx !== 'number' || idx < 0) return;
+    const entry = highScores[idx];
+    if (!entry) return;
+
+    if (!window._hiddenNameInput) {
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.maxLength = 20;
+      inp.autocapitalize = 'characters'; // uppercase on many mobiles
+      inp.autocomplete = 'off';
+      inp.autocorrect = 'off';
+      inp.spellcheck = false;
+      inp.inputMode = 'text';
+      inp.style.position = 'fixed';
+      inp.style.left = '-9999px';
+      inp.style.top = '-9999px';
+      inp.style.opacity = '0';
+      inp.style.height = '1px';
+      inp.style.width = '1px';
+      document.body.appendChild(inp);
+      window._hiddenNameInput = inp;
+
+      // sync input -> highScores
+      inp.addEventListener('input', (e) => {
+        const i = parseInt(inp.dataset.editIndex || '', 10);
+        if (Number.isFinite(i) && highScores[i]) {
+          highScores[i].name = (e.target.value || '').toUpperCase();
+        }
+      });
+
+      // Enter finalizes
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const i = parseInt(inp.dataset.editIndex || '', 10);
+          if (Number.isFinite(i) && highScores[i]) {
+            highScores[i].name = (inp.value || '').toUpperCase();
+          }
+          resetHighScoreEditing();
+          try { localStorage.setItem('highScores', JSON.stringify(highScores)); } catch(_) {}
+        }
+      });
+
+      // blur finalizes too
+      inp.addEventListener('blur', () => {
+        const i = parseInt(inp.dataset.editIndex || '', 10);
+        if (Number.isFinite(i) && highScores[i]) {
+          highScores[i].name = (inp.value || '').toUpperCase();
+        }
+        resetHighScoreEditing();
+        try { localStorage.setItem('highScores', JSON.stringify(highScores)); } catch(_) {}
+      });
+    }
+
+    const inp = window._hiddenNameInput;
+    inp.dataset.editIndex = String(idx);
+    inp.value = entry.name || "";
+    drawHighScoreConsole._editingIndex = idx;
+    drawHighScoreConsole._cursorVisible = true;
+    drawHighScoreConsole._cursorTimer = 0;
+
+    // focusing twice with a small timeout helps iOS in many edge cases
+    try { inp.focus(); inp.select(); } catch(_) {}
+    setTimeout(()=>{ try { inp.focus(); inp.select(); } catch(_) {} }, 60);
+  }
+
   function checkAndSaveHighScore(finalScore){
     if (!qualifiesForHighScore(finalScore)) return;
 
@@ -510,12 +578,19 @@
     drawHighScoreConsole._editingIndex = insertIndex;
     drawHighScoreConsole._cursorVisible = true;
     drawHighScoreConsole._cursorTimer = 0;
+
+    // <--- KEY: auto-open the (hidden) input so mobile keyboard appears
+    startNameEdit(insertIndex);
   }
 
   function resetHighScoreEditing() {
     drawHighScoreConsole._editingIndex = null;
     drawHighScoreConsole._cursorVisible = false;
     drawHighScoreConsole._cursorTimer = 0;
+    if (window._hiddenNameInput) {
+      try { window._hiddenNameInput.blur(); } catch(_) {}
+      window._hiddenNameInput.dataset.editIndex = "";
+    }
   }
 
   function drawHighScoreConsole(){
@@ -669,21 +744,20 @@
       drawBackground();
       updateBackground();
       updatePlayer();
-
-      // frame-based spawning (device-proof)
       itemSpawnCounter++;
       enemySpawnCounter++;
 
+      // adjust spawn rate based on level (in frames)
       const itemRate = Math.max(50, 200 - level * 5); 
       const enemyRate = Math.max(60, 300 - level * 5);
 
       if (itemSpawnCounter >= itemRate) { 
-        spawnItem(); 
-        itemSpawnCounter = 0; 
+          spawnItem(); 
+          itemSpawnCounter = 0; 
       }
       if (enemySpawnCounter >= enemyRate) { 
-        spawnEnemy(); 
-        enemySpawnCounter = 0; 
+          spawnEnemy(); 
+          enemySpawnCounter = 0; 
       }
 
       drawPlayer();
@@ -744,6 +818,85 @@
     requestAnimationFrame(loop);
   }
 
+  canvas.addEventListener("click", e=>{
+    const mx = e.offsetX, my = e.offsetY;
+
+    if (state === "intro" && playButtonBounds) {
+      if (
+        mx >= playButtonBounds.x && mx <= playButtonBounds.x + playButtonBounds.w &&
+        my >= playButtonBounds.y && my <= playButtonBounds.y + playButtonBounds.h
+      ) {
+        playSound(sounds.buttonClick);
+        stopSound(sounds.gameBG);
+        stopSound(sounds.ending);
+        playSound(sounds.startScreen, 0.5);
+        bgX = 0;
+        state = "start";
+        return;
+      }
+    }
+
+    if (state === "start") {
+      for (const b of characterBounds) {
+        if (mx >= b.x && mx <= b.x+b.w && my >= b.y && my <= b.y+b.h) {
+          playSound(sounds.buttonClick);
+          selectedPlayer = b.index;
+          playerImg = characters[b.index].img;
+          setTimeout(()=>{
+            resetGame();
+            stopSound(sounds.startScreen);
+            playSound(sounds.gameBG, 0.6);
+            state = "play";
+            let itemRate = Math.max(800,2000-level*150);
+            let enemyRate = Math.max(1000,3000-level*180);
+          },200);
+          break;
+        }
+      }
+    } 
+    else if (state === "gameover") {
+      const b = drawHighScoreConsole._btn;
+      if (b && mx >= b.x && mx <= b.x+b.w && my >= b.y && my <= b.y+b.h) {
+        playSound(sounds.buttonClick);
+        setTimeout(()=>{
+          resetGame();  
+          resetHighScoreEditing();
+          gameOverAnim = null;             
+          selectedPlayer = null;           
+          bgX = 0;
+          stopSound(sounds.gameBG);
+          playSound(sounds.startScreen, 0.5);
+          state = "start";  
+        }, 200);
+      }
+    }
+  });
+
+  window.addEventListener("keydown", e=>keys[e.key]=true);
+  window.addEventListener("keyup", e=>keys[e.key]=false);
+
+  // global editing key handler (only active when editing a high-score name)
+  window.addEventListener("keydown", function(e){
+    if (state === "gameover" && drawHighScoreConsole._editingIndex != null) {
+      e.preventDefault();
+      const idx = drawHighScoreConsole._editingIndex;
+      const entry = highScores[idx];
+      if (!entry) return;
+
+      if (e.key === "Backspace") {
+        entry.name = (entry.name || "").slice(0, -1);
+      } else if (e.key === "Enter") {
+        // finalize and save
+        drawHighScoreConsole._editingIndex = null;
+        resetHighScoreEditing(); 
+        try { localStorage.setItem("highScores", JSON.stringify(highScores)); } catch(_) {}
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+        // append character (uppercase), max 20 chars
+        if ((entry.name || "").length < 20) entry.name = (entry.name || "") + e.key.toUpperCase();
+      }
+    }
+  });
+
   // ===== Joystick & Touch Handling (device-proof) =====
 
   const joystick = document.createElement("div");
@@ -775,9 +928,10 @@
   document.body.appendChild(joystick);
 
   let joyActive = false;
+  let origin = { x: 0, y: 0 };
 
   // === helper to get canvas-relative coords ===
-  function getTouchPosOnCanvas(touch) {
+  function getTouchPos(touch) {
     const rect = canvas.getBoundingClientRect();
     return {
       x: touch.clientX - rect.left,
@@ -785,82 +939,15 @@
     };
   }
 
-  // helper to get joystick center in viewport coords
-  function getJoystickCenter() {
-    const r = joystick.getBoundingClientRect();
-    return { cx: r.left + r.width/2, cy: r.top + r.height/2 };
-  }
-
-  // Touch start (also used for mobile Play button etc)
+  // Touch start
   canvas.addEventListener("touchstart", e=>{
-    // handle short-circuit for start/intro/gameover interactions below
+    if(state !== "play") return;
     const t = e.touches[0];
-    const pos = getTouchPosOnCanvas(t);
-
-    // If intro and play button tapped on mobile -> same behavior as click
-    if (state === "intro" && playButtonBounds) {
-      if (pos.x >= playButtonBounds.x && pos.x <= playButtonBounds.x + playButtonBounds.w &&
-          pos.y >= playButtonBounds.y && pos.y <= playButtonBounds.y + playButtonBounds.h) {
-        playSound(sounds.buttonClick);
-        stopSound(sounds.gameBG);
-        stopSound(sounds.ending);
-        playSound(sounds.startScreen, 0.5);
-        bgX = 0;
-        state = "start";
-        e.preventDefault();
-        return;
-      }
-    }
-
-    // If in start screen, check character pick
-    if (state === "start") {
-      for (const b of characterBounds) {
-        if (pos.x >= b.x && pos.x <= b.x+b.w && pos.y >= b.y && pos.y <= b.y+b.h) {
-          playSound(sounds.buttonClick);
-          selectedPlayer = b.index;
-          playerImg = characters[b.index].img;
-          setTimeout(()=>{
-            resetGame();
-            stopSound(sounds.startScreen);
-            playSound(sounds.gameBG, 0.6);
-            state = "play";
-            // spawning via frame counters will handle auto-spawn
-          },200);
-          e.preventDefault();
-          return;
-        }
-      }
-    }
-
-    // If in gameover and Play Again tapped
-    if (state === "gameover") {
-      const b = drawHighScoreConsole._btn;
-      if (b && pos.x >= b.x && pos.x <= b.x+b.w && pos.y >= b.y && pos.y <= b.y+b.h) {
-        playSound(sounds.buttonClick);
-        setTimeout(()=>{
-          resetGame();  
-          resetHighScoreEditing();
-          gameOverAnim = null;             
-          selectedPlayer = null;           
-          bgX = 0;
-          stopSound(sounds.gameBG);
-          playSound(sounds.startScreen, 0.5);
-          state = "start";  
-        }, 200);
-        e.preventDefault();
-        return;
-      }
-    }
-
-    // If we reach here and state is play -> start joystick
-    if (state !== "play") return;
-    const touch = e.touches[0];
-    // show joystick fixed at bottom-left
+    origin = { x: t.clientX, y: t.clientY };
+    // joystick stays at bottom-left corner
     joystick.style.left = `20px`;
     joystick.style.bottom = `20px`;
     joystick.style.display = "block";
-    // reset stick to center visually
-    stick.style.transform = "translate(-50%,-50%)";
     joyActive = true;
     e.preventDefault();
   }, { passive: false });
@@ -868,118 +955,25 @@
   canvas.addEventListener("touchmove", e=>{
     if(!joyActive) return;
     const t = e.touches[0];
-    // compute delta relative to actual joystick center in viewport coords
-    const center = getJoystickCenter();
-    const dx = t.clientX - center.cx; // positive = right
-    const dy = t.clientY - center.cy; // positive = down
+    const dx = t.clientX - (20 + 60); // 20px left + half joystick width
+    const dy = t.clientY - (window.innerHeight - (20 + 60)); // 20px bottom + half joystick height
     const dist = Math.hypot(dx, dy);
-    const max = (joystick.getBoundingClientRect().width/2) - (stick.getBoundingClientRect().width/2) - 2; // fit inside circle
+    const max = 50;
     const ratio = dist>max ? max/dist : 1;
     const rx = dx * ratio, ry = dy * ratio;
-    // move the small stick visually
     stick.style.transform = `translate(calc(-50% + ${rx}px), calc(-50% + ${ry}px))`;
-    // convert rx/ry into movement where full deflection = player.speed
-    if (player) {
-      player.x += (rx / max) * player.speed;
-      player.y += (ry / max) * player.speed;
-      // clamp player inside canvas
-      if (player.x < 0) player.x = 0;
-      if (player.y < 0) player.y = 0;
-      if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
-      if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
-    }
+    player.x += (rx / max) * player.speed;
+    player.y += (ry / max) * player.speed;
     e.preventDefault();
   }, { passive: false });
 
   canvas.addEventListener("touchend", e=>{
-    // release joystick
     joyActive = false;
     joystick.style.left = `20px`;
     joystick.style.bottom = `20px`;
     stick.style.transform = "translate(-50%,-50%)"; 
     e.preventDefault();
-  }, { passive: false });
-
-  // Keep mouse click handler for desktop
-  canvas.addEventListener("click", e=>{
-    const mx = e.offsetX, my = e.offsetY;
-
-    if (state === "intro" && playButtonBounds) {
-      if (
-        mx >= playButtonBounds.x && mx <= playButtonBounds.x + playButtonBounds.w &&
-        my >= playButtonBounds.y && my <= playButtonBounds.y + playButtonBounds.h
-      ) {
-        playSound(sounds.buttonClick);
-        stopSound(sounds.gameBG);
-        stopSound(sounds.ending);
-        playSound(sounds.startScreen, 0.5);
-        bgX = 0;
-        state = "start";
-        return;
-      }
-    }
-
-    if (state === "start") {
-      for (const b of characterBounds) {
-        if (mx >= b.x && mx <= b.x+b.w && my >= b.y && my <= b.y+b.h) {
-          playSound(sounds.buttonClick);
-          selectedPlayer = b.index;
-          playerImg = characters[b.index].img;
-          setTimeout(()=>{
-            resetGame();
-            stopSound(sounds.startScreen);
-            playSound(sounds.gameBG, 0.6);
-            state = "play";
-            // frame-based spawning handles automatic spawning
-          },200);
-          break;
-        }
-      }
-    } 
-    else if (state === "gameover") {
-      const b = drawHighScoreConsole._btn;
-      if (b && mx >= b.x && mx <= b.x+b.w && my >= b.y && my <= b.y+b.h) {
-        playSound(sounds.buttonClick);
-        setTimeout(()=>{
-          resetGame();  
-          resetHighScoreEditing();
-          gameOverAnim = null;             
-          selectedPlayer = null;           
-          bgX = 0;
-          stopSound(sounds.gameBG);
-          playSound(sounds.startScreen, 0.5);
-          state = "start";  
-        }, 200);
-      }
-    }
   });
 
-  // keyboard
-  window.addEventListener("keydown", e=>keys[e.key]=true);
-  window.addEventListener("keyup", e=>keys[e.key]=false);
-
-  // global editing key handler (only active when editing a high-score name)
-  window.addEventListener("keydown", function(e){
-    if (state === "gameover" && drawHighScoreConsole._editingIndex != null) {
-      e.preventDefault();
-      const idx = drawHighScoreConsole._editingIndex;
-      const entry = highScores[idx];
-      if (!entry) return;
-
-      if (e.key === "Backspace") {
-        entry.name = (entry.name || "").slice(0, -1);
-      } else if (e.key === "Enter") {
-        // finalize and save
-        drawHighScoreConsole._editingIndex = null;
-        resetHighScoreEditing(); 
-        try { localStorage.setItem("highScores", JSON.stringify(highScores)); } catch(_) {}
-      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-        // append character (uppercase), max 20 chars
-        if ((entry.name || "").length < 20) entry.name = (entry.name || "") + e.key.toUpperCase();
-      }
-    }
-  });
-
-  // start the loop
   loop();
 })();
