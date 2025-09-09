@@ -31,8 +31,6 @@
   const oinkImg = new Image(); oinkImg.src = "oink.png";
   const baaImg = new Image(); baaImg.src = "baa.png";
   const explosionImage = new Image(); explosionImage.src = "explosion.png";
-  let itemSpawnCounter = 0;
-  let enemySpawnCounter = 0;
   let gameOverAnim = null;
   let introImages = [];
   let introLoaded = 0;
@@ -109,7 +107,7 @@ sounds.gameBG.audio.loop = true;
   let state = "intro";  // possible values: "intro", "start", "play", "gameover"
 
   let selectedPlayer = null, playerImg = null;
-  let bgX, score, level, scrollSpeed, player, keys, items, enemies;
+  let bgX, score, level, scrollSpeed, player, keys, items, enemies, itemTimer, enemyTimer;
   let characterBounds = [];
   let explosion = { x: 0, y: 0, visible: false, timer: 0 };
   let playButtonBounds = null;
@@ -133,7 +131,9 @@ function resetGame() {
 
     // reset HS prompt flag 
     drawGameOver._didHS = false;
-    levelBanner = null; 
+    levelBanner = null;
+    clearInterval(itemTimer);
+    clearInterval(enemyTimer);  
 
 
 }
@@ -376,7 +376,9 @@ function updateAndDrawLevelBanner() {
         // resume spawning now
         let itemRate = Math.max(800, 2000 - level * 100);
         let enemyRate = Math.max(1000, 3000 - level * 130);
-              }, 1000); // 1 second pause at center
+        itemTimer = setInterval(spawnItem, itemRate);
+        enemyTimer = setInterval(spawnEnemy, enemyRate);
+      }, 1000); // 1 second pause at center
     }
   }
   ctx.restore();
@@ -388,6 +390,10 @@ function updateAndDrawLevelBanner() {
   if (newLevel > level) {
     level = newLevel;
     scrollSpeed = 3 + (level - 1) * 1.2;
+
+    // stop spawning
+    clearInterval(itemTimer);
+    clearInterval(enemyTimer);
 
     // create a banner
     const text = "LEVEL " + level;
@@ -523,7 +529,7 @@ function checkAndSaveHighScore(finalScore){
   drawHighScoreConsole._cursorVisible = true;
   drawHighScoreConsole._cursorTimer = 0;
 
-  
+  // NOTE: do not save to localStorage yet — wait until player presses Enter.
 }
 
 function resetHighScoreEditing() {
@@ -651,31 +657,6 @@ function drawHighScoreConsole(){
 }
 
 
-
-// --- Resume ONLY the background music (no rewinds) when the page/tab wakes ---
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) {
-    try {
-      const bg = sounds && sounds.gameBG && sounds.gameBG.audio;
-      const start = sounds && sounds.startScreen && sounds.startScreen.audio;
-
-      if (state === "play" && bg && bg.paused) {
-        // resume in-game background music where it left off
-        bg.play().catch(()=>{});
-      }
-
-      if (state === "start" && start && start.paused) {
-        // resume start-screen music (don't rewind)
-        start.play().catch(()=>{});
-      }
-    } catch (e) {
-      // ignore any errors
-    }
-  }
-});
-
-
-
   function loop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -690,23 +671,6 @@ document.addEventListener('visibilitychange', () => {
       drawBackground();
       updateBackground();
       updatePlayer();
-itemSpawnCounter++;
-enemySpawnCounter++;
-
-// adjust spawn rate based on level (in frames)
-const itemRate = Math.max(50, 200 - level * 5); 
-const enemyRate = Math.max(60, 300 - level * 5);
-
-if (itemSpawnCounter >= itemRate) { 
-    spawnItem(); 
-    itemSpawnCounter = 0; 
-}
-if (enemySpawnCounter >= enemyRate) { 
-    spawnEnemy(); 
-    enemySpawnCounter = 0; 
-}
-
-
       drawPlayer();
       updateItems();
       drawItems();
@@ -735,6 +699,8 @@ if (enemySpawnCounter >= enemyRate) {
           explosion.visible = false;
           if (player.dead) {
             state = "gameover";
+            clearInterval(itemTimer);
+            clearInterval(enemyTimer);
             player.dead = false; 
             stopSound(sounds.gameBG);
             playSound(sounds.ending, 0.8);
@@ -799,7 +765,9 @@ canvas.addEventListener("click", e=>{
           state = "play";
           let itemRate = Math.max(800,2000-level*150);
           let enemyRate = Math.max(1000,3000-level*180);
-                  },200);
+          itemTimer = setInterval(spawnItem,itemRate);
+          enemyTimer = setInterval(spawnEnemy,enemyRate);
+        },200);
         break;
       }
     }
@@ -872,40 +840,60 @@ window.addEventListener("keydown", function(e){
 
   let joyActive = false, origin = {x:0, y:0};
 
-
   canvas.addEventListener("touchstart", e=>{
-  if(state !== "play") return;
-  const t = e.touches[0];
-  origin = { x: t.clientX, y: t.clientY };
-  // joystick stays at bottom-left corner
-  joystick.style.left = `20px`;
-  joystick.style.bottom = `20px`;
-  joystick.style.display = "block";
-  joyActive = true;
-  e.preventDefault();
-}, { passive: false });
+    if(state !== "play") return;
+    const t = e.touches[0];
+    origin = { x: t.clientX, y: t.clientY };
+    joystick.style.left = `${origin.x - 60}px`;
+    joystick.style.bottom = `${window.innerHeight - origin.y - 60}px`;
+    joystick.style.display = "block";
+    joyActive = true;
+    e.preventDefault();
+  }, { passive: false });
 
-canvas.addEventListener("touchmove", e=>{
-  if(!joyActive) return;
-  const t = e.touches[0];
-  const dx = t.clientX - (20 + 60); // 20px left + half joystick width
-  const dy = t.clientY - (window.innerHeight - (20 + 60)); // 20px bottom + half joystick height
-  const dist = Math.hypot(dx, dy);
-  const max = 50;
-  const ratio = dist>max ? max/dist : 1;
-  const rx = dx * ratio, ry = dy * ratio;
-  stick.style.transform = `translate(calc(-50% + ${rx}px), calc(-50% + ${ry}px))`;
-  player.x += (rx / max) * player.speed;
-  player.y += (ry / max) * player.speed;
-  e.preventDefault();
-}, { passive: false });
+  canvas.addEventListener("touchmove", e=>{
+    if(!joyActive) return;
+    const t = e.touches[0];
+    const dx = t.clientX - origin.x, dy = t.clientY - origin.y;
+    const dist = Math.hypot(dx, dy);
+    const max = 50;
+    const ratio = dist>max ? max/dist : 1;
+    const rx = dx * ratio, ry = dy * ratio;
+    stick.style.transform = `translate(calc(-50% + ${rx}px), calc(-50% + ${ry}px))`;
+    player.x += (rx / max) * player.speed;
+    player.y += (ry / max) * player.speed;
+    e.preventDefault();
+  }, { passive: false });
 
-canvas.addEventListener("touchend", e=>{
-  joyActive = false;
-  joystick.style.left = `20px`;
-  joystick.style.bottom = `20px`;
-  stick.style.transform = "translate(-50%,-50%)"; 
-  e.preventDefault();
+  canvas.addEventListener("touchend", e=>{
+    joyActive = false;
+    joystick.style.display = "none";
+    stick.style.transform = "translate(-50%,-50%)";
+    e.preventDefault();
+  });
+
+
+// handle tab visibility / laptop sleep
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    // resume background music if we are in play/start screen
+    if (state === "play" && sounds.gameBG.audio.paused) {
+      sounds.gameBG.audio.play().catch(() => {});
+    }
+    if (state === "start" && sounds.startScreen.audio.paused) {
+      sounds.startScreen.audio.play().catch(() => {});
+    }
+
+    // reset timers so items/enemies don't "build up"
+    if (state === "play") {
+      clearInterval(itemTimer);
+      clearInterval(enemyTimer);
+      let itemRate = Math.max(800, 2000 - level * 150);
+      let enemyRate = Math.max(1000, 3000 - level * 180);
+      itemTimer = setInterval(spawnItem, itemRate);
+      enemyTimer = setInterval(spawnEnemy, enemyRate);
+    }
+  }
 });
 
 
