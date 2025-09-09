@@ -810,37 +810,69 @@ function getTouchPos(touch) {
 }
 
 // Touch start
-canvas.addEventListener("touchstart", e=>{
-  if(state !== "play") return;
+canvas.addEventListener("touchstart", e => {
+  if (state !== "play" && state !== "intro" && state !== "start") return;
+
   const t = e.touches[0];
-  origin = { x: t.clientX, y: t.clientY };
-  // joystick stays at bottom-left corner
-  joystick.style.left = `20px`;
-  joystick.style.bottom = `20px`;
-  joystick.style.display = "block";
-  joyActive = true;
+  const pos = getTouchPos(t);
+
+  // If playing, activate joystick
+  if (state === "play") {
+    origin = { x: pos.x, y: pos.y };
+    joystick.style.display = "block";
+    joyActive = true;
+  }
+
+  // Intro/play button
+  if (state === "intro" && playButtonBounds) {
+    if (
+      pos.x >= playButtonBounds.x &&
+      pos.x <= playButtonBounds.x + playButtonBounds.w &&
+      pos.y >= playButtonBounds.y &&
+      pos.y <= playButtonBounds.y + playButtonBounds.h
+    ) {
+      playSound(sounds.buttonClick);
+      stopSound(sounds.gameBG);
+      stopSound(sounds.ending);
+      playSound(sounds.startScreen, 0.5);
+      bgX = 0;
+      state = "start";
+      return;
+    }
+  }
+
   e.preventDefault();
 }, { passive: false });
 
-canvas.addEventListener("touchmove", e=>{
-  if(!joyActive) return;
+// Touch move
+canvas.addEventListener("touchmove", e => {
+  if (!joyActive) return;
   const t = e.touches[0];
-  const dx = t.clientX - (20 + 60); // 20px left + half joystick width
-  const dy = t.clientY - (window.innerHeight - (20 + 60)); // 20px bottom + half joystick height
+  const pos = getTouchPos(t);
+
+  const dx = pos.x - origin.x;
+  const dy = pos.y - origin.y;
+
+  const max = 50; // joystick radius
   const dist = Math.hypot(dx, dy);
-  const max = 50;
-  const ratio = dist>max ? max/dist : 1;
-  const rx = dx * ratio, ry = dy * ratio;
+  const ratio = dist > max ? max / dist : 1;
+
+  const rx = dx * ratio;
+  const ry = dy * ratio;
+
   stick.style.transform = `translate(calc(-50% + ${rx}px), calc(-50% + ${ry}px))`;
+
+  // Move player
   player.x += (rx / max) * player.speed;
   player.y += (ry / max) * player.speed;
+
   e.preventDefault();
 }, { passive: false });
 
-canvas.addEventListener("touchend", e=>{
+// Touch end
+canvas.addEventListener("touchend", e => {
   joyActive = false;
-  joystick.style.left = `20px`;
-  joystick.style.bottom = `20px`;
-  stick.style.transform = "translate(-50%,-50%)"; 
+  stick.style.transform = "translate(-50%,-50%)";
+  joystick.style.display = "none";
   e.preventDefault();
-});
+}, { passive: false });
