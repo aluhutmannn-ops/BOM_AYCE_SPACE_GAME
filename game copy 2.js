@@ -767,13 +767,13 @@ if (enemySpawnCounter >= enemyRate) {
     requestAnimationFrame(loop);
   }
 
-// --- INPUT HANDLERS & JOYSTICK ---
+canvas.addEventListener("click", e=>{
+  const mx = e.offsetX, my = e.offsetY;
 
-function handlePlayButton(x, y) {
   if (state === "intro" && playButtonBounds) {
     if (
-      x >= playButtonBounds.x && x <= playButtonBounds.x + playButtonBounds.w &&
-      y >= playButtonBounds.y && y <= playButtonBounds.y + playButtonBounds.h
+      mx >= playButtonBounds.x && mx <= playButtonBounds.x + playButtonBounds.w &&
+      my >= playButtonBounds.y && my <= playButtonBounds.y + playButtonBounds.h
     ) {
       playSound(sounds.buttonClick);
       stopSound(sounds.gameBG);
@@ -781,136 +781,118 @@ function handlePlayButton(x, y) {
       playSound(sounds.startScreen, 0.5);
       bgX = 0;
       state = "start";
+      return;
     }
   }
-}
 
-canvas.addEventListener("click", e => {
-  handlePlayButton(e.offsetX, e.offsetY);
 
   if (state === "start") {
     for (const b of characterBounds) {
-      if (e.offsetX >= b.x && e.offsetX <= b.x + b.w &&
-          e.offsetY >= b.y && e.offsetY <= b.y + b.h) {
+      if (mx >= b.x && mx <= b.x+b.w && my >= b.y && my <= b.y+b.h) {
         playSound(sounds.buttonClick);
         selectedPlayer = b.index;
         playerImg = characters[b.index].img;
-        setTimeout(() => {
+        setTimeout(()=>{
           resetGame();
           stopSound(sounds.startScreen);
           playSound(sounds.gameBG, 0.6);
           state = "play";
-        }, 200);
+          let itemRate = Math.max(800,2000-level*150);
+          let enemyRate = Math.max(1000,3000-level*180);
+                  },200);
         break;
       }
     }
-  } else if (state === "gameover") {
+  } 
+  else if (state === "gameover") {
     const b = drawHighScoreConsole._btn;
-    if (b && e.offsetX >= b.x && e.offsetX <= b.x + b.w &&
-          e.offsetY >= b.y && e.offsetY <= b.y + b.h) {
+    if (b && mx >= b.x && mx <= b.x+b.w && my >= b.y && my <= b.y+b.h) {
       playSound(sounds.buttonClick);
-      setTimeout(() => {
-        resetGame();
+      setTimeout(()=>{
+        resetGame();  
         resetHighScoreEditing();
-        gameOverAnim = null;
-        selectedPlayer = null;
+        gameOverAnim = null;             
+        selectedPlayer = null;           
         bgX = 0;
         stopSound(sounds.gameBG);
         playSound(sounds.startScreen, 0.5);
-        state = "start";
+        state = "start";  
       }, 200);
     }
   }
 });
 
-canvas.addEventListener("touchstart", e => {
-  if (state === "intro") {
-    const t = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    handlePlayButton(t.clientX - rect.left, t.clientY - rect.top);
-  } else if (state === "start") {
-    const t = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    const tx = t.clientX - rect.left;
-    const ty = t.clientY - rect.top;
-    for (const b of characterBounds) {
-      if (tx >= b.x && tx <= b.x + b.w && ty >= b.y && ty <= b.y + b.h) {
-        playSound(sounds.buttonClick);
-        selectedPlayer = b.index;
-        playerImg = characters[b.index].img;
-        setTimeout(() => {
-          resetGame();
-          stopSound(sounds.startScreen);
-          playSound(sounds.gameBG, 0.6);
-          state = "play";
-        }, 200);
-        break;
-      }
-    }
-  } else if (state === "gameover") {
-    const t = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    const tx = t.clientX - rect.left;
-    const ty = t.clientY - rect.top;
-    const b = drawHighScoreConsole._btn;
-    if (b && tx >= b.x && tx <= b.x + b.w && ty >= b.y && ty <= b.y + b.h) {
-      playSound(sounds.buttonClick);
-      setTimeout(() => {
-        resetGame();
-        resetHighScoreEditing();
-        gameOverAnim = null;
-        selectedPlayer = null;
-        bgX = 0;
-        stopSound(sounds.gameBG);
-        playSound(sounds.startScreen, 0.5);
-        state = "start";
-      }, 200);
+ 
+  
+
+  window.addEventListener("keydown", e=>keys[e.key]=true);
+  window.addEventListener("keyup", e=>keys[e.key]=false);
+
+// global editing key handler (only active when editing a high-score name)
+window.addEventListener("keydown", function(e){
+  if (state === "gameover" && drawHighScoreConsole._editingIndex != null) {
+    e.preventDefault();
+    const idx = drawHighScoreConsole._editingIndex;
+    const entry = highScores[idx];
+    if (!entry) return;
+
+    if (e.key === "Backspace") {
+      entry.name = (entry.name || "").slice(0, -1);
+    } else if (e.key === "Enter") {
+      // finalize and save
+      drawHighScoreConsole._editingIndex = null;
+    resetHighScoreEditing(); 
+    try { localStorage.setItem("highScores", JSON.stringify(highScores)); } catch(_) {}
+    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+      // append character (uppercase), max 20 chars
+      if ((entry.name || "").length < 20) entry.name = (entry.name || "") + e.key.toUpperCase();
     }
   }
-  e.preventDefault();
-}, { passive: false });
-
-// --- JOYSTICK ---
-const joystick = document.createElement("div");
-const stick = document.createElement("div");
-Object.assign(joystick.style, {
-  position: "absolute", left: "20px", bottom: "20px",
-  width: "120px", height: "120px",
-  background: "rgba(255,255,255,0.3)",
-  borderRadius: "50%", display: "none", zIndex: 1000, touchAction: "none"
 });
-Object.assign(stick.style, {
-  position: "absolute", left: "50%", top: "50%",
-  width: "50px", height: "50px",
-  background: "rgba(255,255,255,0.8)",
-  borderRadius: "50%",
-  transform: "translate(-50%,-50%)",
-  touchAction: "none"
-});
-joystick.appendChild(stick);
-document.body.appendChild(joystick);
 
-let joyActive = false;
+  
+  const joystick = document.createElement("div");
+  const stick = document.createElement("div");
+  Object.assign(joystick.style, {
+    position: "absolute", left: "20px", bottom: "20px",
+    width: "120px", height: "120px",
+    background: "rgba(255,255,255,0.3)",
+    borderRadius: "50%", display: "none", zIndex: 1000, touchAction: "none"
+  });
+  Object.assign(stick.style, {
+    position: "absolute", left: "50%", top: "50%",
+    width: "50px", height: "50px",
+    background: "rgba(255,255,255,0.8)",
+    borderRadius: "50%",
+    transform: "translate(-50%,-50%)",
+    touchAction: "none"
+  });
+  joystick.appendChild(stick);
+  document.body.appendChild(joystick);
 
-canvas.addEventListener("touchstart", e => {
-  if (state !== "play") return;
+  let joyActive = false, origin = {x:0, y:0};
+
+
+  canvas.addEventListener("touchstart", e=>{
+  if(state !== "play") return;
   const t = e.touches[0];
+  origin = { x: t.clientX, y: t.clientY };
+  // joystick stays at bottom-left corner
+  joystick.style.left = `20px`;
+  joystick.style.bottom = `20px`;
   joystick.style.display = "block";
   joyActive = true;
   e.preventDefault();
 }, { passive: false });
 
-canvas.addEventListener("touchmove", e => {
-  if (!joyActive) return;
+canvas.addEventListener("touchmove", e=>{
+  if(!joyActive) return;
   const t = e.touches[0];
-  const rect = canvas.getBoundingClientRect();
-  const cx = 20 + 60; // center x of joystick
-  const cy = rect.height - (20 + 60); // center y of joystick
-  let dx = t.clientX - rect.left - cx;
-  let dy = t.clientY - rect.top - cy;
+  const dx = t.clientX - (20 + 60); // 20px left + half joystick width
+  const dy = t.clientY - (window.innerHeight - (20 + 60)); // 20px bottom + half joystick height
   const dist = Math.hypot(dx, dy);
   const max = 50;
-  const ratio = dist > max ? max / dist : 1;
+  const ratio = dist>max ? max/dist : 1;
   const rx = dx * ratio, ry = dy * ratio;
   stick.style.transform = `translate(calc(-50% + ${rx}px), calc(-50% + ${ry}px))`;
   player.x += (rx / max) * player.speed;
@@ -918,8 +900,14 @@ canvas.addEventListener("touchmove", e => {
   e.preventDefault();
 }, { passive: false });
 
-canvas.addEventListener("touchend", e => {
+canvas.addEventListener("touchend", e=>{
   joyActive = false;
-  stick.style.transform = "translate(-50%,-50%)";
+  joystick.style.left = `20px`;
+  joystick.style.bottom = `20px`;
+  stick.style.transform = "translate(-50%,-50%)"; 
   e.preventDefault();
 });
+
+
+  loop();
+})();
