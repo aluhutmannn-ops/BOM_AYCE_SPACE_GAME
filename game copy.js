@@ -818,59 +818,122 @@
     requestAnimationFrame(loop);
   }
 
-  canvas.addEventListener("click", e=>{
-    const mx = e.offsetX, my = e.offsetY;
+// Unified click/touch handler
+function handleInput(evt) {
+    evt.preventDefault(); // prevent default behavior like scrolling
 
-    if (state === "intro" && playButtonBounds) {
-      if (
-        mx >= playButtonBounds.x && mx <= playButtonBounds.x + playButtonBounds.w &&
-        my >= playButtonBounds.y && my <= playButtonBounds.y + playButtonBounds.h
-      ) {
-        playSound(sounds.buttonClick);
-        stopSound(sounds.gameBG);
-        stopSound(sounds.ending);
-        playSound(sounds.startScreen, 0.5);
-        bgX = 0;
-        state = "start";
+    let rect = canvas.getBoundingClientRect();
+    let x, y;
+
+    if (evt.type === "touchstart") {
+        // Use the first touch
+        x = evt.touches[0].clientX - rect.left;
+        y = evt.touches[0].clientY - rect.top;
+    } else {
+        x = evt.offsetX;
+        y = evt.offsetY;
+    }
+
+    // --- PLAY BUTTON ---
+    if (gameState === "intro" && isPointInRect(x, y, playButtonRect)) {
+        startGame();
         return;
-      }
     }
 
-    if (state === "start") {
-      for (const b of characterBounds) {
-        if (mx >= b.x && mx <= b.x+b.w && my >= b.y && my <= b.y+b.h) {
-          playSound(sounds.buttonClick);
-          selectedPlayer = b.index;
-          playerImg = characters[b.index].img;
-          setTimeout(()=>{
-            resetGame();
-            stopSound(sounds.startScreen);
-            playSound(sounds.gameBG, 0.6);
-            state = "play";
-            let itemRate = Math.max(800,2000-level*150);
-            let enemyRate = Math.max(1000,3000-level*180);
-          },200);
-          break;
+    // --- HIGH-SCORE NAME ENTRY ---
+    if (gameState === "gameOver") {
+        // Check if click/tap is on a high-score row
+        let rowIdx = getHighScoreRowAt(x, y);
+        if (rowIdx !== -1) {
+            startNameEdit(rowIdx);
+            return;
         }
-      }
-    } 
-    else if (state === "gameover") {
-      const b = drawHighScoreConsole._btn;
-      if (b && mx >= b.x && mx <= b.x+b.w && my >= b.y && my <= b.y+b.h) {
+    }
+
+    // --- Other buttons / UI ---
+    handleOtherUI(x, y);
+}
+
+// Helper to detect if a point is inside a rectangle
+function isPointInRect(px, py, rect) {
+    return px >= rect.x && px <= rect.x + rect.width &&
+           py >= rect.y && py <= rect.y + rect.height;
+}
+
+// Add event listeners
+canvas.addEventListener("click", handleInput);
+canvas.addEventListener("touchstart", handleInput);
+
+
+function handleCanvasTap(mx, my) {
+  // INTRO -> go to START
+  if (state === "intro" && playButtonBounds) {
+    if (mx >= playButtonBounds.x && mx <= playButtonBounds.x + playButtonBounds.w &&
+        my >= playButtonBounds.y && my <= playButtonBounds.y + playButtonBounds.h) {
+      playSound(sounds.buttonClick);
+      stopSound(sounds.gameBG);
+      stopSound(sounds.ending);
+      playSound(sounds.startScreen, 0.5);
+      bgX = 0;
+      state = "start";
+      return;
+    }
+  }
+
+  // START -> choose character
+  if (state === "start") {
+    for (const b of characterBounds) {
+      if (mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h) {
         playSound(sounds.buttonClick);
+        selectedPlayer = b.index;
+        playerImg = characters[b.index].img;
         setTimeout(()=>{
-          resetGame();  
-          resetHighScoreEditing();
-          gameOverAnim = null;             
-          selectedPlayer = null;           
-          bgX = 0;
-          stopSound(sounds.gameBG);
-          playSound(sounds.startScreen, 0.5);
-          state = "start";  
-        }, 200);
+          resetGame();
+          stopSound(sounds.startScreen);
+          playSound(sounds.gameBG, 0.6);
+          state = "play";
+          // old itemRate/enemyRate vars here are unused with frame-based spawns
+        },200);
+        break;
       }
     }
-  });
+    return;
+  }
+
+  // GAMEOVER -> Play again button in high-score console
+  if (state === "gameover") {
+    const b = drawHighScoreConsole._btn;
+    if (b && mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h) {
+      playSound(sounds.buttonClick);
+      setTimeout(()=>{
+        resetGame();
+        resetHighScoreEditing();
+        gameOverAnim = null;
+        selectedPlayer = null;
+        bgX = 0;
+        stopSound(sounds.gameBG);
+        playSound(sounds.startScreen, 0.5);
+        state = "start";
+      }, 200);
+    }
+  }
+}
+
+// mouse click fallback
+canvas.addEventListener("click", function(e){
+  const p = getCanvasPosFromEvent(e);
+  handleCanvasTap(p.x, p.y);
+});
+
+// touch: handle quick taps for intro/start/gameover (don't interfere with joystick)
+// only intercept touchstart when NOT in "play" (joystick code handles play touches)
+canvas.addEventListener("touchstart", function(e){
+  if (state === "play") return; // let joystick handle play touches
+  // prevent default so some browsers don't fire a synthetic click afterwards
+  e.preventDefault();
+  const p = getCanvasPosFromEvent(e);
+  handleCanvasTap(p.x, p.y);
+}, { passive: false });
 
   window.addEventListener("keydown", e=>keys[e.key]=true);
   window.addEventListener("keyup", e=>keys[e.key]=false);
