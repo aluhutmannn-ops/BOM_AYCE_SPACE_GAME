@@ -516,6 +516,9 @@
     drawHighScoreConsole._editingIndex = null;
     drawHighScoreConsole._cursorVisible = false;
     drawHighScoreConsole._cursorTimer = 0;
+    if ('ontouchstart' in window) {
+      showVirtualKeyboard(drawHighScoreConsole._editingIndex);
+    }
   }
 
   function drawHighScoreConsole(){
@@ -655,6 +658,78 @@
       }
     }
   });
+
+
+// Virtual on-screen keyboard for touch devices (iOS/mobile)
+function showVirtualKeyboard(editingIndex) {
+  // Only if actually editing a high score name
+  if (editingIndex == null) return;
+
+  // Avoid duplicating keyboard
+  if (document.getElementById('virtual-keyboard')) return;
+
+  const keyboardContainer = document.createElement('div');
+  keyboardContainer.id = 'virtual-keyboard';
+  keyboardContainer.style.position = 'fixed';
+  keyboardContainer.style.bottom = '2%';
+  keyboardContainer.style.left = '50%';
+  keyboardContainer.style.transform = 'translateX(-50%)';
+  keyboardContainer.style.zIndex = 9999;
+  keyboardContainer.style.display = 'grid';
+  keyboardContainer.style.gridTemplateColumns = 'repeat(10, minmax(0, 1fr))';
+  keyboardContainer.style.gap = '0.5vw';
+  keyboardContainer.style.maxWidth = '95%';
+  keyboardContainer.style.padding = '1vw';
+  keyboardContainer.style.background = 'rgba(0,0,0,0.6)';
+  keyboardContainer.style.borderRadius = '1vw';
+
+  const keys = [
+    ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    ..."0123456789",
+    "BACK", "ENTER"
+  ];
+
+  keys.forEach(k => {
+    const btn = document.createElement('button');
+    btn.textContent = k;
+    btn.style.padding = '1vw';
+    btn.style.fontSize = '2.5vw';
+    btn.style.borderRadius = '0.5vw';
+    btn.style.background = '#222';
+    btn.style.color = '#fff';
+    btn.style.border = '1px solid #555';
+    btn.style.cursor = 'pointer';
+    btn.addEventListener('click', () => {
+      const entry = highScores[editingIndex];
+      if (!entry) return;
+
+      if (k === 'BACK') {
+        entry.name = (entry.name || '').slice(0, -1);
+      } else if (k === 'ENTER') {
+        drawHighScoreConsole._editingIndex = null;
+        resetHighScoreEditing();
+        hideVirtualKeyboard();
+        try { localStorage.setItem('highScores', JSON.stringify(highScores)); } catch (_) {}
+      } else if ((entry.name || '').length < 20) {
+        entry.name = (entry.name || '') + k;
+      }
+    });
+    keyboardContainer.appendChild(btn);
+  });
+
+  document.body.appendChild(keyboardContainer);
+}
+
+function hideVirtualKeyboard() {
+  const kb = document.getElementById('virtual-keyboard');
+  if (kb) kb.remove();
+}
+
+
+
+
+
+
 
   function loop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
