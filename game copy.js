@@ -542,6 +542,245 @@
     ctx.restore();
   }
 
+
+
+// ===== Responsive virtual keyboard (QWERTY, numbers, SHIFT, SPACE, BACK, ENTER) =====
+(function(){
+  // helper to avoid duplicate keyboards
+  function _removeExistingKeyboard() {
+    const ex = document.getElementById('virtual-keyboard');
+    if (ex) ex.remove();
+  }
+
+  function _makeBtnLabel(key, shiftOn) {
+    // letters toggle case, numbers remain number
+    if (key.length === 1 && /[A-Z]/.test(key)) return shiftOn ? key : key.toLowerCase();
+    return key;
+  }
+
+  // call this to show the keyboard for a given highScores index
+  window.showVirtualKeyboard = function(editingIndex){
+    if (editingIndex == null) return;
+    if (!window.highScores) return;
+    _removeExistingKeyboard();
+
+    const shiftState = { on: false }; // mutable so inner handlers can toggle
+    const maxChars = 20;
+
+    const container = document.createElement('div');
+    container.id = 'virtual-keyboard';
+    // overall container styling (matches console look)
+    Object.assign(container.style, {
+      position: 'fixed',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      bottom: '2vh',
+      width: '94vw',
+      maxWidth: '1100px',
+      zIndex: 99999,
+      background: '#050a0a',
+      border: '2px solid #00ff99',
+      borderRadius: '10px',
+      padding: '0.6vh 0.6vw',
+      boxSizing: 'border-box',
+      boxShadow: '0 6px 18px rgba(0,255,153,0.08)',
+      touchAction: 'none',
+      userSelect: 'none'
+    });
+
+    // rows definition (top-to-bottom). Use upper-case letters in definition for clarity.
+    const rows = [
+      "1234567890".split(''),
+      "QWERTYUIOP".split(''),
+      "ASDFGHJKL".split(''),
+      "ZXCVBNM".split(''),
+      ["SHIFT", "SPACE", "BACK", "ENTER"]
+    ];
+
+    // common key style factory
+    function styleKeyEl(el) {
+      Object.assign(el.style, {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: '0.35vh 0.35vw',
+        borderRadius: '6px',
+        border: '1px solid rgba(255,255,255,0.06)',
+        background: '#111',
+        color: '#fff',
+        fontFamily: 'monospace, Arial',
+        fontWeight: '600',
+        fontSize: '3.2vw', // viewport relative, scales on phones
+        minHeight: '6.5vh',
+        boxSizing: 'border-box',
+        cursor: 'pointer',
+        touchAction: 'manipulation',
+        transition: 'transform 0.06s ease, box-shadow 0.06s ease, background 0.06s ease'
+      });
+      // responsive clamp for font-size on larger screens
+      if (window.innerWidth > 800) el.style.fontSize = '18px';
+    }
+
+    // press visual feedback
+    function pressVisual(el) {
+      el.style.transform = 'translateY(3px) scale(0.99)';
+      el.style.boxShadow = 'inset 0 0 0 2px rgba(0,255,153,0.06)';
+    }
+    function releaseVisual(el) {
+      el.style.transform = '';
+      el.style.boxShadow = '';
+    }
+
+    // build rows
+    rows.forEach((rowKeys) => {
+      const row = document.createElement('div');
+      Object.assign(row.style, {
+        display: 'flex',
+        width: '100%',
+        boxSizing: 'border-box',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: '0.4vh'
+      });
+
+      rowKeys.forEach((k) => {
+        const btn = document.createElement('button');
+        btn.setAttribute('type','button');
+        btn.setAttribute('aria-label','vk-'+k);
+        btn.dataset.key = k;
+        styleKeyEl(btn);
+
+        // sizing: SPACE larger, SHIFT/BACK/ENTER slightly wider, others equal per row
+        if (k === 'SPACE') {
+          btn.style.flex = '4';
+          btn.style.borderRadius = '6px';
+          btn.style.background = '#0b1f0b';
+          btn.style.color = '#00ff99';
+        } else if (k === 'SHIFT' || k === 'BACK' || k === 'ENTER') {
+          btn.style.flex = '1.2';
+        } else {
+          btn.style.flex = '1';
+        }
+
+        // apply console-green border highlight for special keys
+        if (k === 'ENTER') {
+          btn.style.border = '1px solid rgba(0,255,153,0.22)';
+        }
+
+        // initial label (respect shift state)
+        btn.textContent = _makeBtnLabel(k, shiftState.on);
+
+        // pointer handlers (covers touch & mouse)
+        const down = (ev) => {
+          ev.preventDefault();
+          pressVisual(btn);
+        };
+        const up = (ev) => {
+          ev.preventDefault();
+          releaseVisual(btn);
+          handleKeyPress(k);
+        };
+
+        btn.addEventListener('pointerdown', down, { passive: false });
+        btn.addEventListener('pointerup', up);
+        // fallback for some browsers
+        btn.addEventListener('touchstart', down, { passive: false });
+        btn.addEventListener('touchend', up);
+
+        // small hover for desktops
+        btn.addEventListener('mouseenter', ()=> { btn.style.filter = 'brightness(1.05)'; });
+        btn.addEventListener('mouseleave', ()=> { btn.style.filter = ''; releaseVisual(btn); });
+
+        row.appendChild(btn);
+      });
+
+      container.appendChild(row);
+    });
+
+    // attach to DOM
+    document.body.appendChild(container);
+
+    // update labels function when shift toggles
+    function updateCaseDisplay() {
+      const btns = container.querySelectorAll('button');
+      btns.forEach(b=>{
+        const k = b.dataset.key;
+        if (k && k.length === 1 && /[A-Z]/.test(k)) {
+          b.textContent = _makeBtnLabel(k, shiftState.on);
+        }
+        // style SHIFT to indicate active
+        if (k === 'SHIFT') {
+          b.style.background = shiftState.on ? '#00ff99' : '#111';
+          b.style.color = shiftState.on ? '#002211' : '#fff';
+        }
+      });
+    }
+
+    // key action implementation (mutates highScores[editingIndex].name)
+    function handleKeyPress(k) {
+      const entry = window.highScores && window.highScores[editingIndex];
+      if (!entry) return;
+
+      if (k === 'BACK') {
+        entry.name = (entry.name || '').slice(0, -1);
+        return;
+      }
+      if (k === 'ENTER') {
+        // finalize & save (keeps behavior same as physical Enter)
+        window.drawHighScoreConsole && (window.drawHighScoreConsole._editingIndex = null);
+        // reset editing state in your code
+        try { window.resetHighScoreEditing && window.resetHighScoreEditing(); } catch(_) {}
+        // persist
+        try { localStorage.setItem('highScores', JSON.stringify(window.highScores)); } catch(_) {}
+        _removeExistingKeyboard();
+        return;
+      }
+      if (k === 'SHIFT') {
+        shiftState.on = !shiftState.on;
+        updateCaseDisplay();
+        return;
+      }
+      if (k === 'SPACE') {
+        if ((entry.name || '').length < maxChars) entry.name = (entry.name || '') + ' ';
+        return;
+      }
+
+      // letter or number key
+      if (k.length === 1) {
+        const ch = (/[A-Z]/.test(k)) ? (shiftState.on ? k : k.toLowerCase()) : k;
+        if ((entry.name || '').length < maxChars) entry.name = (entry.name || '') + ch;
+        // do NOT automatically turn off SHIFT (keeps it toggled until pressed again)
+        return;
+      }
+    }
+
+    // prevent page scrolling while keyboard present on touchmove inside the keyboard
+    container.addEventListener('touchmove', (e)=>{ e.stopPropagation(); }, { passive: false });
+
+    // close keyboard if user taps outside (optional safe behaviour)
+    const outsideHandler = (ev) => {
+      const target = ev.target;
+      if (!container.contains(target)) {
+        // don't auto-finalize — preserve current editing index but hide keyboard
+        _removeExistingKeyboard();
+        document.removeEventListener('pointerdown', outsideHandler);
+      }
+    };
+    document.addEventListener('pointerdown', outsideHandler);
+
+    // initial case paint
+    updateCaseDisplay();
+  };
+
+  // call this to hide the keyboard
+  window.hideVirtualKeyboard = function(){
+    _removeExistingKeyboard();
+  };
+})();
+
+
+
+
   // --- Resume ONLY the background music (no rewinds) when the page/tab wakes ---
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
@@ -554,70 +793,7 @@
     }
   });
 
-  // ===== Virtual on-screen keyboard for touch devices (iOS/mobile) =====
-  function showVirtualKeyboard(editingIndex) {
-    if (editingIndex == null) return;
-    if (document.getElementById('virtual-keyboard')) return;
-
-    const keyboardContainer = document.createElement('div');
-    keyboardContainer.id = 'virtual-keyboard';
-    keyboardContainer.style.position = 'fixed';
-    keyboardContainer.style.bottom = '2%';
-    keyboardContainer.style.left = '50%';
-    keyboardContainer.style.transform = 'translateX(-50%)';
-    keyboardContainer.style.zIndex = 99999;
-    keyboardContainer.style.display = 'grid';
-    keyboardContainer.style.gridTemplateColumns = 'repeat(10, 1fr)';
-    keyboardContainer.style.gap = '0.4vw';
-    keyboardContainer.style.maxWidth = '96%';
-    keyboardContainer.style.padding = '0.6vw';
-    keyboardContainer.style.background = 'rgba(0,0,0,0.6)';
-    keyboardContainer.style.borderRadius = '6px';
-
-    // keys: A-Z then 0-9 then BACK and ENTER
-    const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
-    const num = "0123456789".split('');
-    const keysLayout = [...alpha, ...num, "BACK", "ENTER"];
-
-    keysLayout.forEach(k => {
-      const btn = document.createElement('button');
-      btn.textContent = k;
-      btn.setAttribute('aria-label', 'key-' + k);
-      btn.style.padding = '0.7vh';
-      btn.style.fontSize = '3.5vw';
-      btn.style.borderRadius = '6px';
-      btn.style.background = '#222';
-      btn.style.color = '#fff';
-      btn.style.border = '1px solid #444';
-      btn.style.touchAction = 'manipulation';
-      // Use touchstart & click so it works responsively across Safari/Chrome
-      const handler = (ev) => {
-        ev.preventDefault();
-        const entry = highScores[editingIndex];
-        if (!entry) return;
-        if (k === 'BACK') {
-          entry.name = (entry.name || '').slice(0, -1);
-        } else if (k === 'ENTER') {
-          drawHighScoreConsole._editingIndex = null;
-          resetHighScoreEditing();
-          try { localStorage.setItem('highScores', JSON.stringify(highScores)); } catch (_) {}
-        } else {
-          if ((entry.name || '').length < 20) entry.name = (entry.name || '') + k;
-        }
-      };
-      btn.addEventListener('touchstart', handler, { passive: false });
-      btn.addEventListener('click', handler);
-      keyboardContainer.appendChild(btn);
-    });
-
-    document.body.appendChild(keyboardContainer);
-  }
-
-  function hideVirtualKeyboard() {
-    const kb = document.getElementById('virtual-keyboard');
-    if (kb) kb.remove();
-  }
-
+ 
   // ===== Main loop =====
   function loop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
