@@ -984,7 +984,6 @@
   loop();
 
 
-
   // ===== MOBILE ON-SCREEN KEYBOARD FOR HIGH-SCORE ENTRY =====
   (function(){
     const isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
@@ -1017,45 +1016,25 @@
       const keys = [
         ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         ..."0123456789",
-        "Space","Shift","Back","Enter"
+        "Shift","Back","Enter"
       ];
-
-      const keyWidth = Math.min(canvas.width / 11 - 6, 60);   // scale to canvas width
-      const keyHeight = Math.max(36, canvas.height * 0.05);   // scale to canvas height
+      const keyWidth = Math.min(window.innerWidth/11 - 6, 60); // scale keys to fit
+      const keyHeight = Math.max(36, window.innerHeight*0.05);
 
       keys.forEach(k=>{
         const btn = document.createElement("button");
-
-        if (k === "Shift" || k === "Back" || k === "Enter" || k === "Space") {
-          btn.textContent = k;
-          Object.assign(btn.style, {
-            margin:"2px",
-            flex:"0 0 auto",
-            width: (keyWidth * 1.6) + "px",   // wider for words
-            height: keyHeight + "px",
-            background:"#050a0a",
-            color:"#00ff99",
-            border:"1px solid #00ff99",
-            borderRadius:"4px",
-            fontSize: Math.max(12, canvas.width * 0.02) + "px", // smaller font
-            textAlign:"center"
-          });
-        } else {
-          btn.textContent = shift ? k.toUpperCase() : k.toLowerCase();
-          Object.assign(btn.style, {
-            margin:"2px",
-            flex:"0 0 auto",
-            width: keyWidth + "px",
-            height: keyHeight + "px",
-            background:"#050a0a",
-            color:"#00ff99",
-            border:"1px solid #00ff99",
-            borderRadius:"4px",
-            fontSize: Math.max(14, canvas.width * 0.03) + "px",
-            textAlign:"center"
-          });
-        }
-
+        btn.textContent = shift && k.length===1 ? k.toUpperCase() : (k.length===1 ? k.toLowerCase() : k);
+        Object.assign(btn.style, {
+          margin:"2px",
+          flex:"0 0 auto",
+          width: keyWidth+"px",
+          height: keyHeight+"px",
+          background:"#050a0a",
+          color:"#00ff99",
+          border:"1px solid #00ff99",
+          borderRadius:"4px",
+          fontSize: Math.max(14, window.innerWidth*0.03) + "px"
+        });
         btn.addEventListener("click", ()=>{ handleKeyPress(k); });
         kb.appendChild(btn);
       });
@@ -1068,10 +1047,6 @@
 
       if (k==="Shift") { shift=!shift; renderKeys(); return; }
       if (k==="Back") { entry.name = (entry.name||"").slice(0,-1); return; }
-      if (k==="Space") {
-        if ((entry.name||"").length < 20) entry.name = (entry.name||"") + " ";
-        return;
-      }
       if (k==="Enter") {
         drawHighScoreConsole._editingIndex=null;
         resetHighScoreEditing();
@@ -1115,9 +1090,6 @@
     canvas.addEventListener("touchstart", autoSaveIfEditing);
     window.addEventListener("resize", ()=>{ if(kb.style.display==="flex") renderKeys(); });
   })();
-
-
-
 
 
 })();
