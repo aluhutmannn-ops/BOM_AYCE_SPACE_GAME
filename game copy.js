@@ -985,7 +985,7 @@
 
 
 
-  // ===== MOBILE ON-SCREEN KEYBOARD FOR HIGH-SCORE ENTRY =====
+    // ===== MOBILE ON-SCREEN KEYBOARD FOR HIGH-SCORE ENTRY =====
   (function(){
     const isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
@@ -994,10 +994,7 @@
     const kb = document.createElement("div");
     kb.id = "onscreen-keyboard";
     Object.assign(kb.style, {
-      position: "fixed",
-      bottom: "0",
-      left: "0",
-      width: "100%",
+      position: "absolute",        // anchor relative to canvas
       background: "#050a0a",
       display: "none",
       flexWrap: "wrap",
@@ -1012,6 +1009,17 @@
 
     let shift = false;
 
+    function positionKeyboard() {
+      const rect = canvas.getBoundingClientRect();
+      const kbHeight = rect.height * 0.3; // ~30% of canvas height
+      const margin = rect.height * 0.02;  // 2% margin from bottom
+
+      kb.style.left   = rect.left + "px";
+      kb.style.width  = rect.width + "px";
+      kb.style.height = kbHeight + "px";
+      kb.style.top    = (rect.bottom - kbHeight - margin) + "px";
+    }
+
     function renderKeys() {
       kb.innerHTML = "";
       const keys = [
@@ -1020,8 +1028,8 @@
         "Space","Shift","Back","Enter"
       ];
 
-      const keyWidth = Math.min(canvas.width / 11 - 6, 60);   // scale to canvas width
-      const keyHeight = Math.max(36, canvas.height * 0.05);   // scale to canvas height
+      const keyWidth  = Math.min(canvas.width / 11 - 6, 60);
+      const keyHeight = Math.max(36, canvas.height * 0.05);
 
       keys.forEach(k=>{
         const btn = document.createElement("button");
@@ -1031,13 +1039,13 @@
           Object.assign(btn.style, {
             margin:"2px",
             flex:"0 0 auto",
-            width: (keyWidth * 1.6) + "px",   // wider for words
+            width: (keyWidth * 1.6) + "px",
             height: keyHeight + "px",
             background:"#050a0a",
             color:"#00ff99",
             border:"1px solid #00ff99",
             borderRadius:"4px",
-            fontSize: Math.max(12, canvas.width * 0.02) + "px", // smaller font
+            fontSize: Math.max(12, canvas.width * 0.02) + "px",
             textAlign:"center"
           });
         } else {
@@ -1084,7 +1092,7 @@
       }
     }
 
-    function showKeyboard(){ kb.style.display="flex"; renderKeys(); }
+    function showKeyboard(){ kb.style.display="flex"; positionKeyboard(); renderKeys(); }
     function hideKeyboard(){ kb.style.display="none"; }
 
     // hook into when editing starts
@@ -1113,7 +1121,7 @@
     }
     canvas.addEventListener("click", autoSaveIfEditing);
     canvas.addEventListener("touchstart", autoSaveIfEditing);
-    window.addEventListener("resize", ()=>{ if(kb.style.display==="flex") renderKeys(); });
+    window.addEventListener("resize", ()=>{ if(kb.style.display==="flex") { positionKeyboard(); renderKeys(); } });
   })();
 
 
