@@ -1011,7 +1011,7 @@
 
     function positionKeyboard() {
       const rect = canvas.getBoundingClientRect();
-      const kbHeight = rect.height * 0.3; // ~30% of canvas height
+      const kbHeight = rect.height * 0.4; // ~40% of canvas height
       const margin = rect.height * 0.02;  // 2% margin from bottom
 
       kb.style.left   = rect.left + "px";
