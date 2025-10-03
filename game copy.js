@@ -1014,9 +1014,12 @@
     function renderKeys() {
       kb.innerHTML = "";
       const keys = [
-        ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        ..."0123456789",
-        "Shift","Back","Enter"
+        ..."0123456789","Back",
+        ..."QWERTYUIOP",
+        ..."ASDFGHJKL","Enter",
+        ..."ZXCVBNM","Shift"
+
+       
       ];
       const keyWidth = Math.min(window.innerWidth/11 - 6, 60); // scale keys to fit
       const keyHeight = Math.max(36, window.innerHeight*0.05);
