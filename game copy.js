@@ -2,38 +2,6 @@
   const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");
 
-// === attempt to switch to landscape (best-effort) ===
-async function attemptLockLandscape() {
-  // helper: try to request fullscreen first (improves chances on some browsers)
-  async function tryFullscreen() {
-    try {
-      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-        await document.documentElement.requestFullscreen().catch(()=>{});
-      }
-    } catch (e) { /* ignore */ }
-  }
-
-  // helper: try orientation lock if supported
-  async function tryLock() {
-    try {
-      if (screen && screen.orientation && screen.orientation.lock) {
-        await screen.orientation.lock('landscape').catch(()=>{});
-      }
-    } catch (e) { /* ignore */ }
-  }
-
-  // run a sequence: fullscreen attempt then lock, with a couple quick retries
-  try {
-    await tryFullscreen();
-    await tryLock();
-    setTimeout(tryLock, 200);
-    setTimeout(tryLock, 700);
-  } catch (e) {
-    // silent fallback; game continues even if lock not allowed
-  }
-}
-
-
   function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -839,10 +807,6 @@ async function attemptLockLandscape() {
         playSound(sounds.startScreen, 0.5);
         bgX = 0;
         state = "start";
-
-        // try to make the device landscape (best-effort)
-        try { attemptLockLandscape(); } catch(_) {}
-
         e.preventDefault();
         return;
       }
@@ -951,10 +915,6 @@ async function attemptLockLandscape() {
         playSound(sounds.startScreen, 0.5);
         bgX = 0;
         state = "start";
-
-        // try to make the device landscape (best-effort)
-        try { attemptLockLandscape(); } catch(_) {}
-
         return;
       }
     }
@@ -1024,8 +984,7 @@ async function attemptLockLandscape() {
   loop();
 
 
-
-    // ===== MOBILE ON-SCREEN KEYBOARD FOR HIGH-SCORE ENTRY =====
+  // ===== MOBILE ON-SCREEN KEYBOARD FOR HIGH-SCORE ENTRY =====
   (function(){
     const isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
@@ -1034,7 +993,10 @@ async function attemptLockLandscape() {
     const kb = document.createElement("div");
     kb.id = "onscreen-keyboard";
     Object.assign(kb.style, {
-      position: "absolute",        // anchor relative to canvas
+      position: "fixed",
+      bottom: "0",
+      left: "0",
+      width: "100%",
       background: "#050a0a",
       display: "none",
       flexWrap: "wrap",
@@ -1049,61 +1011,30 @@ async function attemptLockLandscape() {
 
     let shift = false;
 
-    function positionKeyboard() {
-      const rect = canvas.getBoundingClientRect();
-      const kbHeight = rect.height * 0.4; // ~40% of canvas height
-      const margin = rect.height * 0.02;  // 2% margin from bottom
-
-      kb.style.left   = rect.left + "px";
-      kb.style.width  = rect.width + "px";
-      kb.style.height = kbHeight + "px";
-      kb.style.top    = (rect.bottom - kbHeight - margin) + "px";
-    }
-
     function renderKeys() {
       kb.innerHTML = "";
       const keys = [
         ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         ..."0123456789",
-        "Space","Shift","Back","Enter"
+        "Shift","Back","Enter"
       ];
-
-      const keyWidth  = Math.min(canvas.width / 11 - 6, 60);
-      const keyHeight = Math.max(36, canvas.height * 0.05);
+      const keyWidth = Math.min(window.innerWidth/11 - 6, 60); // scale keys to fit
+      const keyHeight = Math.max(36, window.innerHeight*0.05);
 
       keys.forEach(k=>{
         const btn = document.createElement("button");
-
-        if (k === "Shift" || k === "Back" || k === "Enter" || k === "Space") {
-          btn.textContent = k;
-          Object.assign(btn.style, {
-            margin:"2px",
-            flex:"0 0 auto",
-            width: (keyWidth * 1.6) + "px",
-            height: keyHeight + "px",
-            background:"#050a0a",
-            color:"#00ff99",
-            border:"1px solid #00ff99",
-            borderRadius:"4px",
-            fontSize: Math.max(12, canvas.width * 0.02) + "px",
-            textAlign:"center"
-          });
-        } else {
-          btn.textContent = shift ? k.toUpperCase() : k.toLowerCase();
-          Object.assign(btn.style, {
-            margin:"2px",
-            flex:"0 0 auto",
-            width: keyWidth + "px",
-            height: keyHeight + "px",
-            background:"#050a0a",
-            color:"#00ff99",
-            border:"1px solid #00ff99",
-            borderRadius:"4px",
-            fontSize: Math.max(14, canvas.width * 0.03) + "px",
-            textAlign:"center"
-          });
-        }
-
+        btn.textContent = shift && k.length===1 ? k.toUpperCase() : (k.length===1 ? k.toLowerCase() : k);
+        Object.assign(btn.style, {
+          margin:"2px",
+          flex:"0 0 auto",
+          width: keyWidth+"px",
+          height: keyHeight+"px",
+          background:"#050a0a",
+          color:"#00ff99",
+          border:"1px solid #00ff99",
+          borderRadius:"4px",
+          fontSize: Math.max(14, window.innerWidth*0.03) + "px"
+        });
         btn.addEventListener("click", ()=>{ handleKeyPress(k); });
         kb.appendChild(btn);
       });
@@ -1116,10 +1047,6 @@ async function attemptLockLandscape() {
 
       if (k==="Shift") { shift=!shift; renderKeys(); return; }
       if (k==="Back") { entry.name = (entry.name||"").slice(0,-1); return; }
-      if (k==="Space") {
-        if ((entry.name||"").length < 20) entry.name = (entry.name||"") + " ";
-        return;
-      }
       if (k==="Enter") {
         drawHighScoreConsole._editingIndex=null;
         resetHighScoreEditing();
@@ -1132,7 +1059,7 @@ async function attemptLockLandscape() {
       }
     }
 
-    function showKeyboard(){ kb.style.display="flex"; positionKeyboard(); renderKeys(); }
+    function showKeyboard(){ kb.style.display="flex"; renderKeys(); }
     function hideKeyboard(){ kb.style.display="none"; }
 
     // hook into when editing starts
@@ -1161,11 +1088,8 @@ async function attemptLockLandscape() {
     }
     canvas.addEventListener("click", autoSaveIfEditing);
     canvas.addEventListener("touchstart", autoSaveIfEditing);
-    window.addEventListener("resize", ()=>{ if(kb.style.display==="flex") { positionKeyboard(); renderKeys(); } });
+    window.addEventListener("resize", ()=>{ if(kb.style.display==="flex") renderKeys(); });
   })();
-
-
-
 
 
 })();
