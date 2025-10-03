@@ -2,6 +2,38 @@
   const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");
 
+// === attempt to switch to landscape (best-effort) ===
+async function attemptLockLandscape() {
+  // helper: try to request fullscreen first (improves chances on some browsers)
+  async function tryFullscreen() {
+    try {
+      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen().catch(()=>{});
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  // helper: try orientation lock if supported
+  async function tryLock() {
+    try {
+      if (screen && screen.orientation && screen.orientation.lock) {
+        await screen.orientation.lock('landscape').catch(()=>{});
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  // run a sequence: fullscreen attempt then lock, with a couple quick retries
+  try {
+    await tryFullscreen();
+    await tryLock();
+    setTimeout(tryLock, 200);
+    setTimeout(tryLock, 700);
+  } catch (e) {
+    // silent fallback; game continues even if lock not allowed
+  }
+}
+
+
   function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -807,6 +839,10 @@
         playSound(sounds.startScreen, 0.5);
         bgX = 0;
         state = "start";
+
+        // try to make the device landscape (best-effort)
+        try { attemptLockLandscape(); } catch(_) {}
+
         e.preventDefault();
         return;
       }
@@ -915,6 +951,10 @@
         playSound(sounds.startScreen, 0.5);
         bgX = 0;
         state = "start";
+
+        // try to make the device landscape (best-effort)
+        try { attemptLockLandscape(); } catch(_) {}
+
         return;
       }
     }
