@@ -1014,10 +1014,10 @@
     function renderKeys() {
       kb.innerHTML = "";
       const keys = [
-        ..."0123456789","Back",
-        ..."QWERTYUIOP",
-        ..."ASDFGHJKL","Enter",
-        ..."ZXCVBNM","Shift"
+        ..."0123456789","BACK",
+        ..."QWERTYUIOP","ENTER",
+        ..."ASDFGHJKL","SHIFT",
+        ..."ZXCVBNM","SPACE
 
        
       ];
