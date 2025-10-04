@@ -985,114 +985,139 @@
 
 
   // ===== MOBILE ON-SCREEN KEYBOARD FOR HIGH-SCORE ENTRY =====
-  (function(){
-    const isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+(function() {
+  const isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
-    if (!isMobile) return;
+  if (!isMobile) return;
 
-    const kb = document.createElement("div");
-    kb.id = "onscreen-keyboard";
-    Object.assign(kb.style, {
-      position: "fixed",
-      bottom: "0",
-      left: "0",
-      width: "100%",
-      background: "#050a0a",
-      display: "none",
-      flexWrap: "wrap",
-      justifyContent: "center",
-      padding: "6px",
-      zIndex: "2000",
-      borderTop: "3px solid #00ff99",
-      fontFamily: "monospace",
-      boxSizing: "border-box"
-    });
-    document.body.appendChild(kb);
+  const kb = document.createElement("div");
+  kb.id = "onscreen-keyboard";
+  Object.assign(kb.style, {
+    position: "fixed",
+    bottom: "0",
+    left: "0",
+    width: "100%",
+    background: "#050a0a",
+    display: "none",
+    flexDirection: "column", // stack rows vertically
+    justifyContent: "center",
+    padding: "6px",
+    zIndex: "2000",
+    borderTop: "3px solid #00ff99",
+    fontFamily: "monospace",
+    boxSizing: "border-box"
+  });
+  document.body.appendChild(kb);
 
-    let shift = false;
+  let shift = false;
 
-    function renderKeys() {
-      kb.innerHTML = "";
-      const keys = [
-        ..."0123456789","BACK",
-        ..."QWERTYUIOP","ENTER",
-        ..."ASDFGHJKL","SHIFT",
-        ..."ZXCVBNM","SPACE
+  function renderKeys() {
+    kb.innerHTML = ""; // Clear the previous keys
 
-       
-      ];
-      const keyWidth = Math.min(window.innerWidth/11 - 6, 60); // scale keys to fit
-      const keyHeight = Math.max(36, window.innerHeight*0.05);
+    const keys = [
+      ..."0123456789", "BACK",
+      ..."QWERTYUIOP", "ENTER",
+      ..."ASDFGHJKL", "SHIFT",
+      ..."ZXCVBNM", "SPACE"
+    ];
 
-      keys.forEach(k=>{
+    // Create rows
+    const row1 = keys.slice(0, 11);  // 0-9 + BACK
+    const row2 = keys.slice(11, 21); // QWERTYUIOP + ENTER
+    const row3 = keys.slice(21, 31); // ASDFGHJKL + SHIFT
+    const row4 = keys.slice(31);     // ZXCVBNM + SPACE
+
+    // Function to create each row of buttons
+    function createRow(keysArray) {
+      const row = document.createElement("div");
+      row.style.display = "flex";
+      row.style.flexWrap = "nowrap"; // Prevent wrapping
+      row.style.justifyContent = "center"; // Center keys horizontally
+      row.style.marginBottom = "6px"; // Space between rows
+
+      keysArray.forEach(k => {
         const btn = document.createElement("button");
-        btn.textContent = shift && k.length===1 ? k.toUpperCase() : (k.length===1 ? k.toLowerCase() : k);
+        btn.textContent = shift && k.length === 1 ? k.toUpperCase() : (k.length === 1 ? k.toLowerCase() : k);
+        const keyWidth = Math.min(window.innerWidth / 11 - 6, 60); // scale keys to fit
+        const keyHeight = Math.max(36, window.innerHeight * 0.05);
+
         Object.assign(btn.style, {
-          margin:"2px",
-          flex:"0 0 auto",
-          width: keyWidth+"px",
-          height: keyHeight+"px",
-          background:"#050a0a",
-          color:"#00ff99",
-          border:"1px solid #00ff99",
-          borderRadius:"4px",
-          fontSize: Math.max(14, window.innerWidth*0.03) + "px"
+          margin: "2px",
+          flex: "0 0 auto",
+          width: `${keyWidth}px`,
+          height: `${keyHeight}px`,
+          background: "#050a0a",
+          color: "#00ff99",
+          border: "1px solid #00ff99",
+          borderRadius: "4px",
+          fontSize: Math.max(14, window.innerWidth * 0.03) + "px"
         });
-        btn.addEventListener("click", ()=>{ handleKeyPress(k); });
-        kb.appendChild(btn);
+
+        btn.addEventListener("click", () => { handleKeyPress(k); });
+        row.appendChild(btn);
       });
+
+      kb.appendChild(row);
     }
 
-    function handleKeyPress(k) {
-      const idx = drawHighScoreConsole._editingIndex;
-      if (state !== "gameover" || idx==null) return;
-      const entry = highScores[idx];
+    // Create the four rows
+    createRow(row1);
+    createRow(row2);
+    createRow(row3);
+    createRow(row4);
+  }
 
-      if (k==="Shift") { shift=!shift; renderKeys(); return; }
-      if (k==="Back") { entry.name = (entry.name||"").slice(0,-1); return; }
-      if (k==="Enter") {
-        drawHighScoreConsole._editingIndex=null;
-        resetHighScoreEditing();
-        try { localStorage.setItem("highScores", JSON.stringify(highScores)); } catch(_){}
-        hideKeyboard();
-        return;
-      }
-      if ((entry.name||"").length<20) {
-        entry.name = (entry.name||"") + (shift? k.toUpperCase(): k.toLowerCase());
-      }
-    }
+  function handleKeyPress(k) {
+    const idx = drawHighScoreConsole._editingIndex;
+    if (state !== "gameover" || idx == null) return;
+    const entry = highScores[idx];
 
-    function showKeyboard(){ kb.style.display="flex"; renderKeys(); }
-    function hideKeyboard(){ kb.style.display="none"; }
-
-    // hook into when editing starts
-    const origCheckAndSave = checkAndSaveHighScore;
-    checkAndSaveHighScore = function(finalScore){
-      origCheckAndSave(finalScore);
-      if (state==="gameover" && drawHighScoreConsole._editingIndex!=null) {
-        showKeyboard();
-      }
-    };
-
-    // also ensure hiding when leaving gameover
-    const origReset = resetHighScoreEditing;
-    resetHighScoreEditing = function(){
-      origReset();
+    if (k === "SHIFT") { shift = !shift; renderKeys(); return; }
+    if (k === "BACK") { entry.name = (entry.name || "").slice(0, -1); return; }
+    if (k === "ENTER") {
+      drawHighScoreConsole._editingIndex = null;
+      resetHighScoreEditing();
+      try { localStorage.setItem("highScores", JSON.stringify(highScores)); } catch (_) {}
       hideKeyboard();
-    };
-
-    // ensure "Play Again" also saves current name
-    function autoSaveIfEditing() {
-      if (state==="gameover" && drawHighScoreConsole._editingIndex!=null) {
-        drawHighScoreConsole._editingIndex=null;
-        resetHighScoreEditing();
-        try { localStorage.setItem("highScores", JSON.stringify(highScores)); } catch(_){}
-      }
+      return;
     }
-    canvas.addEventListener("click", autoSaveIfEditing);
-    canvas.addEventListener("touchstart", autoSaveIfEditing);
-    window.addEventListener("resize", ()=>{ if(kb.style.display==="flex") renderKeys(); });
-  })();
+    if ((entry.name || "").length < 20) {
+      entry.name = (entry.name || "") + (shift ? k.toUpperCase() : k.toLowerCase());
+    }
+  }
+
+  function showKeyboard() { kb.style.display = "flex"; renderKeys(); }
+  function hideKeyboard() { kb.style.display = "none"; }
+
+  // hook into when editing starts
+  const origCheckAndSave = checkAndSaveHighScore;
+  checkAndSaveHighScore = function(finalScore) {
+    origCheckAndSave(finalScore);
+    if (state === "gameover" && drawHighScoreConsole._editingIndex != null) {
+      showKeyboard();
+    }
+  };
+
+  // also ensure hiding when leaving gameover
+  const origReset = resetHighScoreEditing;
+  resetHighScoreEditing = function() {
+    origReset();
+    hideKeyboard();
+  };
+
+  // ensure "Play Again" also saves current name
+  function autoSaveIfEditing() {
+    if (state === "gameover" && drawHighScoreConsole._editingIndex != null) {
+      drawHighScoreConsole._editingIndex = null;
+      resetHighScoreEditing();
+      try { localStorage.setItem("highScores", JSON.stringify(highScores)); } catch (_) {}
+    }
+  }
+
+  canvas.addEventListener("click", autoSaveIfEditing);
+  canvas.addEventListener("touchstart", autoSaveIfEditing);
+  window.addEventListener("resize", () => { if (kb.style.display === "flex") renderKeys(); });
+})();
 
 
 })();
