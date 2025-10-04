@@ -1014,10 +1014,10 @@
     function renderKeys() {
       kb.innerHTML = "";
       const keys = [
-        ..."1234567890","back",
-        ..."qwertyuiop","enter",
-        ..."asdfghjkl","shift",
-        ..."zxcvbnm","space"
+        ..."1234567890","Back",
+        ..."qwertyuiop","Enter",
+        ..."asdfghjkl","Shift",
+        ..."zxcvbnm","Space"
       ];
       const keyWidth = Math.min(window.innerWidth/11 - 6, 60); // scale keys to fit
       const keyHeight = Math.max(36, window.innerHeight*0.05);
@@ -1048,6 +1048,7 @@
 
       if (k==="Shift") { shift=!shift; renderKeys(); return; }
       if (k==="Back") { entry.name = (entry.name||"").slice(0,-1); return; }
+      if (k==="Space") { entry.name = (entry.name||"").slice(0,+1); return; }
       if (k==="Enter") {
         drawHighScoreConsole._editingIndex=null;
         resetHighScoreEditing();
