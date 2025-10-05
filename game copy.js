@@ -999,6 +999,8 @@
       width: "100%",
       background: "#050a0a",
       display: "none",
+      flexDirection: "column",
+      alignItems: "center",
       flexWrap: "wrap",
       justifyContent: "center",
       padding: "6px",
@@ -1035,6 +1037,7 @@ function renderKeys() {
       justifyContent: "center",
       alignItems: "center",
       flexWrap: "nowrap",
+      width: "100%",
       margin: "2px 0"
     });
 
