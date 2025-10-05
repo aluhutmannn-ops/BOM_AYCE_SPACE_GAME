@@ -1011,35 +1011,56 @@
 
     let shift = false;
 
-    function renderKeys() {
-      kb.innerHTML = "";
-      const keys = [
-        [..."1234567890","Back"],
-        [..."qwertyuiop","Enter"],
-        [..."asdfghjkl","Shift"],
-        [..."zxcvbnm","Space"]
-      ];
-      const keyWidth = Math.min(window.innerWidth/11 - 6, 60); // scale keys to fit
-      const keyHeight = Math.max(36, window.innerHeight*0.05);
+function renderKeys() {
+  kb.innerHTML = "";
 
-      keys.forEach(k=>{
-        const btn = document.createElement("button");
-        btn.textContent = shift && k.length===1 ? k.toUpperCase() : (k.length===1 ? k.toLowerCase() : k);
-        Object.assign(btn.style, {
-          margin:"2px",
-          flex:"0 0 auto",
-          width: keyWidth+"px",
-          height: keyHeight+"px",
-          background:"#050a0a",
-          color:"#00ff99",
-          border:"1px solid #00ff99",
-          borderRadius:"4px",
-          fontSize: Math.max(14, window.innerWidth*0.03) + "px"
-        });
-        btn.addEventListener("click", ()=>{ handleKeyPress(k); });
-        kb.appendChild(btn);
+  // each row is a flat array of strings (one value per button)
+  const row1 = [..."1234567890","Back"];
+  const row2 = [..."qwertyuiop","Enter"];
+  const row3 = [..."asdfghjkl","Shift"];
+  const row4 = [..."zxcvbnm","Space"];
+  const rows = [row1, row2, row3, row4];
+
+  // key sizing (same approach you used)
+  const keyWidth = Math.min(window.innerWidth / 11 - 6, 60);
+  const keyHeight = Math.max(36, window.innerHeight * 0.05);
+  const fontSize = Math.max(14, window.innerWidth * 0.03) + "px";
+
+  rows.forEach(row => {
+    const rowDiv = document.createElement("div");
+    // row container styles: horizontal line of keys, no wrapping
+    Object.assign(rowDiv.style, {
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      flexWrap: "nowrap",
+      margin: "2px 0"
+    });
+
+    row.forEach(k => {
+      const btn = document.createElement("button");
+      btn.textContent = shift && k.length === 1 ? k.toUpperCase() : (k.length === 1 ? k.toLowerCase() : k);
+      Object.assign(btn.style, {
+        margin: "2px",
+        flex: "0 0 auto",
+        width: keyWidth + "px",
+        height: keyHeight + "px",
+        background: "#050a0a",
+        color: "#00ff99",
+        border: "1px solid #00ff99",
+        borderRadius: "4px",
+        fontSize: fontSize,
+        boxSizing: "border-box"
       });
-    }
+      btn.addEventListener("click", () => { handleKeyPress(k); });
+      rowDiv.appendChild(btn);
+    });
+
+    kb.appendChild(rowDiv);
+  });
+}
+
 
     function handleKeyPress(k) {
       const idx = drawHighScoreConsole._editingIndex;
