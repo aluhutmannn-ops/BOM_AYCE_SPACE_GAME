@@ -1046,9 +1046,9 @@
       if (state !== "gameover" || idx==null) return;
       const entry = highScores[idx];
 
-      if (k==="Shift") { shift=!shift; renderKeys(); return; }
-      if (k==="Space") { entry.name = (entry.name||"").slice(0,-1); return; }
-      if (k==="Back") { entry.name = (entry.name||"") + " "; return; }
+       if (k==="Shift") { shift=!shift; renderKeys(); return; }
+      if (k==="Back") { entry.name = (entry.name||"").slice(0,-1); return; }
+      if (k==="Space") { entry.name = (entry.name||"") + " "; return; }
       if (k==="Enter") {
         drawHighScoreConsole._editingIndex=null;
         resetHighScoreEditing();
