@@ -1045,17 +1045,28 @@ function renderKeys() {
       const btn = document.createElement("button");
       btn.textContent = shift && k.length === 1 ? k.toUpperCase() : (k.length === 1 ? k.toLowerCase() : k);
     Object.assign(btn.style, {
-      margin: "2px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      margin: "4px 6px",
       flex: "0 0 auto",
-      width: keyWidth + "px",
+      width: "auto",                   // size to content
+      minWidth: "30px",                // smallest a key can be
+      maxWidth: keyWidth + "px",       // cap so keys don't grow too large on wide screens
+      padding: "0 10px",               // horizontal breathing room around letters
       height: keyHeight + "px",
+      lineHeight: keyHeight + "px",
       background: "#050a0a",
       color: "#00ff99",
       border: "1px solid #00ff99",
-      borderRadius: "4px",
+      borderRadius: "6px",
       fontSize: fontSize,
-      boxSizing: "border-box"
-    });
+      boxSizing: "border-box",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis"
+});
+
 
       btn.addEventListener("click", () => { handleKeyPress(k); });
       rowDiv.appendChild(btn);
