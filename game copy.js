@@ -1044,18 +1044,19 @@ function renderKeys() {
     row.forEach(k => {
       const btn = document.createElement("button");
       btn.textContent = shift && k.length === 1 ? k.toUpperCase() : (k.length === 1 ? k.toLowerCase() : k);
-      Object.assign(btn.style, {
-        margin: "2px",
-        flex: "0 0 auto",
-        width: keyWidth + "px",
-        height: keyHeight + "px",
-        background: "#050a0a",
-        color: "#00ff99",
-        border: "1px solid #00ff99",
-        borderRadius: "4px",
-        fontSize: fontSize,
-        boxSizing: "border-box"
-      });
+    Object.assign(btn.style, {
+      margin: "2px",
+      flex: "0 0 auto",
+      width: keyWidth + "px",
+      height: keyHeight + "px",
+      background: "#050a0a",
+      color: "#00ff99",
+      border: "1px solid #00ff99",
+      borderRadius: "4px",
+      fontSize: fontSize,
+      boxSizing: "border-box"
+    });
+
       btn.addEventListener("click", () => { handleKeyPress(k); });
       rowDiv.appendChild(btn);
     });
