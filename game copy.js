@@ -1011,7 +1011,7 @@
   Object.assign(frame.style, {
     margin: "0 auto",
     width: "min(980px, 98%)",
-    background: "#071010",        // slightly different from page to make frame visible
+    background: "#f5f5dc",        // slightly different from page to make frame visible
     color: "#00ff99",
     borderRadius: "14px",
     padding: "10px 12px 14px 12px",
