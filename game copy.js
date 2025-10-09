@@ -997,7 +997,6 @@
       bottom: "0",
       left: "0",
       width: "100%",
-      background: "#050a0a",
       display: "none",
       flexDirection: "column",
       alignItems: "center",
@@ -1005,7 +1004,9 @@
       justifyContent: "center",
       padding: "6px",
       zIndex: "2000",
-      borderTop: "3px solid #00ff99",
+      border: "3px solid #00ff99",
+      borderRadius: "10px",
+      background: "transparent",
       fontFamily: "monospace",
       boxSizing: "border-box"
     });
