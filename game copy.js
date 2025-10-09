@@ -995,7 +995,8 @@
     Object.assign(kb.style, {
       position: "fixed",
       bottom: "0",
-      left: "0",
+      left: "50%",
+      transform: "translateX(-50%)",
       width: "fit-content",  
       display: "none",
       flexDirection: "column",
