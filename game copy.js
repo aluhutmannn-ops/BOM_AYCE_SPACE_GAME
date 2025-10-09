@@ -984,157 +984,138 @@
   loop();
 
 
-  // ===== MOBILE ON-SCREEN KEYBOARD FOR HIGH-SCORE ENTRY (keyboard-shaped frame, no green line) =====
-(function(){
-  const isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-  if (!isMobile) return;
+  // ===== MOBILE ON-SCREEN KEYBOARD FOR HIGH-SCORE ENTRY =====
+  (function(){
+    const isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
-  const kb = document.createElement("div");
-  kb.id = "onscreen-keyboard";
-  Object.assign(kb.style, {
-    position: "fixed",
-    bottom: "8px",                // slightly raised above screen edge
-    left: "0",
-    width: "100%",
-    display: "none",
-    padding: "10px",
-    zIndex: "2000",
-    fontFamily: "monospace",
-    boxSizing: "border-box",
-    pointerEvents: "none"         // make the outer container non-interactive; inner frame is interactive
-  });
-  document.body.appendChild(kb);
+    if (!isMobile) return;
 
-  // keyboard frame (the actual visible keyboard "shape")
-  const frame = document.createElement("div");
-  frame.id = "onscreen-keyboard-frame";
-  Object.assign(frame.style, {
-    margin: "0 auto",
-    width: "min(980px, 98%)",
-    background: "#f5f5dc",        // slightly different from page to make frame visible
-    color: "#00ff99",
-    borderRadius: "14px",
-    padding: "10px 12px 14px 12px",
-    boxSizing: "border-box",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
-    border: "2px solid rgba(0,0,0,0.35)",
-    pointerEvents: "auto"         // enable interaction inside frame
-  });
-  kb.appendChild(frame);
-
-  // optional top bezel to emulate a keyboard outline (thin strip)
-  const bezel = document.createElement("div");
-  Object.assign(bezel.style, {
-    height: "8px",
-    width: "100%",
-    borderRadius: "8px",
-    marginBottom: "8px",
-    background: "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06))"
-  });
-  frame.appendChild(bezel);
-
-  let shift = false;
-
-  function renderKeys() {
-    // clear old rows
-    // NOTE: we only clear the area below the bezel inside the frame
-    while (frame.children.length > 1) frame.removeChild(frame.lastChild);
-
-    // explicit rows as flat arrays (one value per button)
-    const row1 = [..."1234567890","Back"];
-    const row2 = [..."qwertyuiop","Enter"];
-    const row3 = [..."asdfghjkl","Shift"];
-    const row4 = [..."zxcvbnm","Space"];
-    const rows = [row1, row2, row3, row4];
-
-    // sizing tuned for mobile; will still look reasonable on tablets
-    const keyWidth = Math.min(window.innerWidth / 11 - 8, 68);
-    const keyHeight = Math.max(40, window.innerHeight * 0.06);
-    const fontSize = Math.max(15, Math.min(22, window.innerWidth * 0.035)) + "px";
-
-    rows.forEach(row => {
-      const rowDiv = document.createElement("div");
-      // each row is a horizontal line of keys, centered
-      Object.assign(rowDiv.style, {
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-        flexWrap: "nowrap",
-        width: "100%",
-        margin: "6px 0"
-      });
-
-      row.forEach(k => {
-        const btn = document.createElement("button");
-        btn.textContent = shift && k.length === 1 ? k.toUpperCase() : (k.length === 1 ? k.toLowerCase() : k);
-        Object.assign(btn.style, {
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          margin: "4px 6px",
-          flex: "0 0 auto",
-          width: "auto",
-          minWidth: (Math.min(40, keyWidth * 0.6)) + "px",
-          maxWidth: keyWidth + "px",
-          padding: "0 10px",
-          height: keyHeight + "px",
-          lineHeight: keyHeight + "px",
-          background: "#061212",
-          color: "#00ff99",
-          border: "1px solid rgba(0,255,153,0.09)",
-          borderRadius: "8px",
-          fontSize: fontSize,
-          boxSizing: "border-box",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          cursor: "pointer",
-          userSelect: "none",
-          WebkitTapHighlightColor: "transparent"
-        });
-        btn.addEventListener("click", (e) => {
-          e.preventDefault();
-          handleKeyPress(k);
-        });
-        rowDiv.appendChild(btn);
-      });
-
-      frame.appendChild(rowDiv);
+    const kb = document.createElement("div");
+    kb.id = "onscreen-keyboard";
+    Object.assign(kb.style, {
+      position: "fixed",
+      bottom: "0",
+      left: "0",
+      width: "100%",
+      background: "#050a0a",
+      display: "none",
+      flexDirection: "column",
+      alignItems: "center",
+      flexWrap: "wrap",
+      justifyContent: "center",
+      padding: "6px",
+      zIndex: "2000",
+      borderTop: "3px solid #00ff99",
+      fontFamily: "monospace",
+      boxSizing: "border-box"
     });
-  }
+    document.body.appendChild(kb);
 
-  function showKeyboard(){ kb.style.display = "block"; renderKeys(); }
-  function hideKeyboard(){ kb.style.display = "none"; }
+    let shift = false;
 
-  // hook into when editing starts
-  const origCheckAndSave = checkAndSaveHighScore;
-  checkAndSaveHighScore = function(finalScore){
-    origCheckAndSave(finalScore);
-    if (state==="gameover" && drawHighScoreConsole._editingIndex!=null) {
-      showKeyboard();
+function renderKeys() {
+  kb.innerHTML = "";
+
+  // each row is a flat array of strings (one value per button)
+  const row1 = [..."1234567890","Back"];
+  const row2 = [..."qwertyuiop","Enter"];
+  const row3 = [..."asdfghjkl","Shift"];
+  const row4 = [..."zxcvbnm","Space"];
+  const rows = [row1, row2, row3, row4];
+
+  // key sizing (same approach you used)
+  const keyWidth = Math.min(window.innerWidth / 11 - 6, 60);
+  const keyHeight = Math.max(36, window.innerHeight * 0.05);
+  const fontSize = Math.max(14, window.innerWidth * 0.03) + "px";
+
+  rows.forEach(row => {
+    const rowDiv = document.createElement("div");
+    // row container styles: horizontal line of keys, no wrapping
+    Object.assign(rowDiv.style, {
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      flexWrap: "nowrap",
+      width: "100%",
+      margin: "2px 0"
+    });
+
+    row.forEach(k => {
+      const btn = document.createElement("button");
+      btn.textContent = shift && k.length === 1 ? k.toUpperCase() : (k.length === 1 ? k.toLowerCase() : k);
+      Object.assign(btn.style, {
+        margin: "2px",
+        flex: "0 0 auto",
+        width: keyWidth + "px",
+        height: keyHeight + "px",
+        background: "#050a0a",
+        color: "#00ff99",
+        border: "1px solid #00ff99",
+        borderRadius: "4px",
+        fontSize: fontSize,
+        boxSizing: "border-box"
+      });
+      btn.addEventListener("click", () => { handleKeyPress(k); });
+      rowDiv.appendChild(btn);
+    });
+
+    kb.appendChild(rowDiv);
+  });
+}
+
+
+    function handleKeyPress(k) {
+      const idx = drawHighScoreConsole._editingIndex;
+      if (state !== "gameover" || idx==null) return;
+      const entry = highScores[idx];
+
+       if (k==="Shift") { shift=!shift; renderKeys(); return; }
+      if (k==="Back") { entry.name = (entry.name||"").slice(0,-1); return; }
+      if (k==="Space") { entry.name = (entry.name||"") + " "; return; }
+      if (k==="Enter") {
+        drawHighScoreConsole._editingIndex=null;
+        resetHighScoreEditing();
+        try { localStorage.setItem("highScores", JSON.stringify(highScores)); } catch(_){}
+        hideKeyboard();
+        return;
+      }
+      if ((entry.name||"").length<20) {
+        entry.name = (entry.name||"") + (shift? k.toUpperCase(): k.toLowerCase());
+      }
     }
-  };
 
-  // also ensure hiding when leaving gameover
-  const origReset = resetHighScoreEditing;
-  resetHighScoreEditing = function(){
-    origReset();
-    hideKeyboard();
-  };
+    function showKeyboard(){ kb.style.display="flex"; renderKeys(); }
+    function hideKeyboard(){ kb.style.display="none"; }
 
-  // ensure "Play Again" also saves current name
-  function autoSaveIfEditing() {
-    if (state==="gameover" && drawHighScoreConsole._editingIndex!=null) {
-      drawHighScoreConsole._editingIndex=null;
-      resetHighScoreEditing();
-      try { localStorage.setItem("highScores", JSON.stringify(highScores)); } catch(_){}
+    // hook into when editing starts
+    const origCheckAndSave = checkAndSaveHighScore;
+    checkAndSaveHighScore = function(finalScore){
+      origCheckAndSave(finalScore);
+      if (state==="gameover" && drawHighScoreConsole._editingIndex!=null) {
+        showKeyboard();
+      }
+    };
+
+    // also ensure hiding when leaving gameover
+    const origReset = resetHighScoreEditing;
+    resetHighScoreEditing = function(){
+      origReset();
+      hideKeyboard();
+    };
+
+    // ensure "Play Again" also saves current name
+    function autoSaveIfEditing() {
+      if (state==="gameover" && drawHighScoreConsole._editingIndex!=null) {
+        drawHighScoreConsole._editingIndex=null;
+        resetHighScoreEditing();
+        try { localStorage.setItem("highScores", JSON.stringify(highScores)); } catch(_){}
+      }
     }
-  }
-  canvas.addEventListener("click", autoSaveIfEditing);
-  canvas.addEventListener("touchstart", autoSaveIfEditing);
-  window.addEventListener("resize", ()=>{ if(kb.style.display!=="none") renderKeys(); });
+    canvas.addEventListener("click", autoSaveIfEditing);
+    canvas.addEventListener("touchstart", autoSaveIfEditing);
+    window.addEventListener("resize", ()=>{ if(kb.style.display==="flex") renderKeys(); });
+  })();
 
-})();
 
 })();
