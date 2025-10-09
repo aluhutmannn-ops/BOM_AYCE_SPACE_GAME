@@ -996,7 +996,7 @@
       position: "fixed",
       bottom: "0",
       left: "0",
-      width: "fit-content"  
+      width: "fit-content",  
       display: "none",
       flexDirection: "column",
       alignItems: "center",
