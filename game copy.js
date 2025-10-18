@@ -1032,7 +1032,7 @@ function renderKeys() {
   const fontSize = fontPx + "px";
 
   // helper: measure text width at fontPx using a small canvas
-  const _measureCanvas = (renderKeys._measureCanvas ||= document.createElement("canvas"));
+const _measureCanvas = (window.__kbMeasureCanvas = window.__kbMeasureCanvas || document.createElement("canvas"));
   const _mctx = _measureCanvas.getContext("2d");
   _mctx.font = `${fontPx}px monospace`;
   function measureTextPx(text) { return Math.ceil(_mctx.measureText(String(text)).width); }
