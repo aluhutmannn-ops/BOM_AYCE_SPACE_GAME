@@ -1025,7 +1025,7 @@ function renderKeys() {
   const row4 = [..."zxcvbnm","Space"];
   const rows = [row1, row2, row3, row4];
 
-  // responsive key sizing: min = width of "W", otherwise grow to fit label + padding
+  // responsive key sizing: minimum = width of "W", otherwise grow to fit label + padding
   // compute font/height first (used for all keys in this render pass)
   const fontPx = Math.max(14, Math.floor(window.innerWidth * 0.03));
   const keyHeight = Math.max(36, Math.round(window.innerHeight * 0.05));
