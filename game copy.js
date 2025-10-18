@@ -1025,24 +1025,14 @@ function renderKeys() {
   const row4 = [..."zxcvbnm","Space"];
   const rows = [row1, row2, row3, row4];
 
-  // responsive key sizing: minimum = width of "W", otherwise grow to fit label + padding
-  // compute font/height first (used for all keys in this render pass)
-  const fontPx = Math.max(14, Math.floor(window.innerWidth * 0.03));
-  const keyHeight = Math.max(36, Math.round(window.innerHeight * 0.05));
-  const fontSize = fontPx + "px";
-
-  // helper: measure text width at fontPx using a small canvas
-const _measureCanvas = (window.__kbMeasureCanvas = window.__kbMeasureCanvas || document.createElement("canvas"));
-  const _mctx = _measureCanvas.getContext("2d");
-  _mctx.font = `${fontPx}px monospace`;
-  function measureTextPx(text) { return Math.ceil(_mctx.measureText(String(text)).width); }
-
-  // baseline: comfortable min width anchored to 'W'
-  const wBaselinePx = Math.max(20, measureTextPx('W')); // floor ~20px for tiny screens
-  const padPx = Math.max(8, Math.round(fontPx * 0.5)); // padding around label
+  // key sizing (same approach you used)
+  const keyWidth = Math.min(window.innerWidth / 11 - 6, 60);
+  const keyHeight = Math.max(36, window.innerHeight * 0.05);
+  const fontSize = Math.max(14, window.innerWidth * 0.03) + "px";
 
   rows.forEach(row => {
     const rowDiv = document.createElement("div");
+    // row container styles: horizontal line of keys, no wrapping
     Object.assign(rowDiv.style, {
       display: "flex",
       flexDirection: "row",
@@ -1050,46 +1040,31 @@ const _measureCanvas = (window.__kbMeasureCanvas = window.__kbMeasureCanvas || d
       alignItems: "center",
       flexWrap: "nowrap",
       width: "100%",
-      margin: "2px 0",
-      overflowX: "auto",           // allow horizontal scroll if absolutely needed
-      WebkitOverflowScrolling: "touch"
+      margin: "2px 0"
     });
 
     row.forEach(k => {
       const btn = document.createElement("button");
-      const label = shift && k.length === 1 ? k.toUpperCase() : (k.length === 1 ? k.toLowerCase() : k);
-      btn.textContent = label;
-
-      // measure label and compute width: labelWidth + padding, but never smaller than W baseline+padding
-      const textW = measureTextPx(label);
-      const minKeyW = wBaselinePx + padPx * 2;
-      let widthPx = Math.max(minKeyW, textW + padPx * 2);
-
-      // optional cosmetic cap: don't let a single key exceed 90% of keyboard width
-      const keyboardMaxW = Math.max(200, Math.round(window.innerWidth * 0.9));
-      widthPx = Math.min(widthPx, Math.round(keyboardMaxW * 0.9));
-
+      btn.textContent = shift && k.length === 1 ? k.toUpperCase() : (k.length === 1 ? k.toLowerCase() : k);
       Object.assign(btn.style, {
         margin: "2px",
         flex: "0 0 auto",
-        width: widthPx + "px",
+        width: keyWidth + "px",
         height: keyHeight + "px",
         background: "#050a0a",
         color: "#00ff99",
         border: "1px solid #00ff99",
-        borderRadius: "6px",
+        borderRadius: "4px",
         fontSize: fontSize,
-        boxSizing: "border-box",
-        padding: "0" // padding already accounted in widthPx
+        boxSizing: "border-box"
       });
-
-      btn.addEventListener("click", (e) => { e.preventDefault(); handleKeyPress(k); });
+      btn.addEventListener("click", () => { handleKeyPress(k); });
       rowDiv.appendChild(btn);
     });
 
     kb.appendChild(rowDiv);
   });
-
+}
 
 
     function handleKeyPress(k) {
