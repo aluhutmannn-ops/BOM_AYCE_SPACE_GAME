@@ -598,11 +598,8 @@ const Y = (canvas.height - H) / 2;
 
     // Decorative knobs/buttons
     const knob = (kx,ky,r,fill) => { ctx.beginPath(); ctx.fillStyle = fill; ctx.arc(kx,ky,r,0,Math.PI*2); ctx.fill(); ctx.closePath(); };
-    knob(X+22, Y+22, 8, "#ff3355");
-    knob(X+44, Y+22, 8, "#ffaa00");
-    knob(X+66, Y+22, 8, "#33ddff");
-    knob(X+W-22, Y+22, 8, "#66ff66");
-    knob(X+W-44, Y+22, 8, "#ff66ff");
+    knob(X+18, Y+18, 6, "#888");
+    knob(X+W-18, Y+18, 6, "#888");
     knob(X+18, Y+H-18, 6, "#888");
     knob(X+W-18, Y+H-18, 6, "#888");
 

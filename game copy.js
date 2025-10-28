@@ -1140,8 +1140,8 @@ function renderKeys() {
         try { localStorage.setItem("highScores", JSON.stringify(highScores)); } catch(_){}
       }
     }
-    canvas.addEventListener("click", autoSaveIfEditing);
-    canvas.addEventListener("touchstart", autoSaveIfEditing);
+    //canvas.addEventListener("click", autoSaveIfEditing);
+    //canvas.addEventListener("touchstart", autoSaveIfEditing);
     window.addEventListener("resize", ()=>{ if(kb.style.display==="flex") renderKeys(); });
   })();
 
