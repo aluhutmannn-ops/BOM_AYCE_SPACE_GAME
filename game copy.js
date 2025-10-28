@@ -519,10 +519,15 @@
   }
 
   function drawHighScoreConsole(){
-    const W = canvas.width * 0.35;
-    const H = canvas.height * 0.8;
-    const X = (canvas.width - W) / 2; 
-    const Y = (canvas.height - H) / 2; 
+const H = canvas.height * 0.8;
+const rowFontPx = Math.max(16, canvas.height * 0.024);
+const charWidthEstimate = rowFontPx * 0.65;
+const desiredNamePx = 20 * charWidthEstimate;
+const extraPaddingPx = rowFontPx * 4;
+const requiredWFromName = Math.ceil((desiredNamePx + extraPaddingPx) / 0.45);
+const W = Math.max(Math.round(canvas.width * 0.35), requiredWFromName);
+const X = (canvas.width - W) / 2;
+const Y = (canvas.height - H) / 2;
 
     ctx.save();
     // Panel background
