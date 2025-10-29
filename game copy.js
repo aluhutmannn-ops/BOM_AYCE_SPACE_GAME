@@ -411,7 +411,7 @@
     ctx.save(); ctx.fillStyle='white'; ctx.textAlign='center';
     const titleSize=Math.max(canvas.height*0.06,24);
     ctx.font=titleSize+'px Arial';
-    ctx.fillText('using the arrow keys',canvas.width/2,canvas.height*0.09);
+    ctx.fillText('using the arrow keys/joystick',canvas.width/2,canvas.height*0.09);
     ctx.fillText('Dodge the farmyard animals to rescue food for Moon Base 1',canvas.width/2,canvas.height*0.09+titleSize*1.2);
     ctx.fillText('but watch out for that Crazy Chicken!!',canvas.width/2,canvas.height*0.09+titleSize*2.4);
     const subSize=Math.max(canvas.height*0.045,18);
