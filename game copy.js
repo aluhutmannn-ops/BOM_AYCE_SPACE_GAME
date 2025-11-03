@@ -91,7 +91,7 @@
     if (!soundEntry || !soundEntry.audio) return;
     const snd = soundEntry.audio;
     const volume = overrideVolume ?? soundEntry.volume ?? 1;
-    snd.currentTime = 0; // rewind
+    if (!snd.loop || snd.paused) snd.currentTime = 0;
     snd.volume = volume;
     snd.play().catch(() => {}); // avoid autoplay errors
   }
