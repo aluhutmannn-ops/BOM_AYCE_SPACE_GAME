@@ -9,19 +9,24 @@
   window.addEventListener("resize", resize);
   resize();
 
-  // === HIGH SCORE STATE (stored in localStorage) ===
   let highScores = [];
   try { highScores = JSON.parse(localStorage.getItem("highScores") || "[]"); } catch (_) { highScores = []; }
   const MAX_HIGH_SCORES = 10;
-
-  const bgImage = new Image(); bgImage.src = "background.png";
-  const heartImg = new Image(); heartImg.src = "Heart.png";
+  const PRIZE_FREQUENCY = 1;
+  let _foodPngCounter = 0;
+  const prizeImg = new Image();
+  const bgImage = new Image();
+  const heartImg = new Image();
   const sheepImg = new Image();
   const pigImg = new Image(); 
   const cowImg = new Image();
+  bgImage.src = "background.png";
+  heartImg.src = "Heart.png";
+
   sheepImg.src = "Sheep_Player.png";
   pigImg.src = "Pig_Player.png";
   cowImg.src = "Cow_Player.png";
+  prizeImg.src = "prize.png";
   const foodImgs = ["food.png","food1.png","food2.png","food3.png","food4.png","food5.png"]
   .map(src => { const i = new Image(); i.src = src; return i; });
   const drinkImgs = ["drink.png","drink1.png","drink2.png","drink3.png","drink4.png"]
@@ -91,7 +96,7 @@
     if (!soundEntry || !soundEntry.audio) return;
     const snd = soundEntry.audio;
     const volume = overrideVolume ?? soundEntry.volume ?? 1;
-    snd.currentTime = 0; // rewind
+    if (!snd.loop || snd.paused) snd.currentTime = 0;
     snd.volume = volume;
     snd.play().catch(() => {}); // avoid autoplay errors
   }
@@ -206,36 +211,38 @@
     player.height = playerHeight;
   }
 
-  function spawnItem(){
-    const pool = [
-      ...foodImgs.map(img => ({ img, type:"food" })),
-      ...drinkImgs.map(img => ({ img, type:"drink" }))
-    ];
-    const count = 1 + Math.floor(Math.random()*3); 
-    for (let n=0;n<count;n++) {
-      const choice = pool[Math.floor(Math.random()*pool.length)];
-      const maxWidth = canvas.width * 0.05;   // max width = 5% of canvas
-      const maxHeight = canvas.height * 0.1;  // max height = 10% of canvas
+function spawnItem(){
+  const pool = [
+    ...foodImgs.map(img => ({ img, type:"food" })),
+    ...drinkImgs.map(img => ({ img, type:"drink" }))
+  ];
+  const count = 1 + Math.floor(Math.random()*3);
+  for (let n=0;n<count;n++) {
+    const choice = pool[Math.floor(Math.random()*pool.length)];
+    // compute target size
+    const maxWidth = canvas.width * 0.05;   // max width = 5% of canvas
+    const maxHeight = canvas.height * 0.1;  // max height = 10% of canvas
 
-      let width = maxWidth;
-      let height = width * (choice.img.height / choice.img.width);
+    let width = maxWidth;
+    let height = width * (choice.img.height / choice.img.width);
 
-      if (height > maxHeight) {
-        height = maxHeight;
-        width = height * (choice.img.width / choice.img.height);
-      }
-      items.push({
-        type: choice.type,
-        x: canvas.width + n * 50,
-        y: Math.random() * (canvas.height - height),
-        width: width,
-        height: height,
-        img: choice.img,
-        speed: scrollSpeed + 2 + level * 0.5
-      });
+    if (height > maxHeight) {
+      height = maxHeight;
+      width = height * (choice.img.width / choice.img.height);
     }
-  }
 
+    // normal food/drink push
+    items.push({
+      type: choice.type,
+      x: canvas.width + n * 50,
+      y: Math.random() * (canvas.height - height),
+      width: width,
+      height: height,
+      img: choice.img,
+      speed: scrollSpeed + 2 + level * 0.5
+    });
+  }
+}
   function spawnEnemy(){
     const count = 1 + Math.floor(Math.random()*3); 
     for (let n=0;n<count;n++) {
@@ -259,16 +266,190 @@
   }
 
   function updateItems(){
-    for(let i=items.length-1;i>=0;i--){
-      const it=items[i]; it.x-=it.speed;
-      if(it.x+it.width<0){items.splice(i,1);continue;}
-      if(player && isColliding(player,it)){
-        score+=it.type==="food"?50:20; 
-        playSound(it.type === "food" ? sounds.eat : sounds.drink, 0.7);
+  for(let i=items.length-1;i>=0;i--){
+    const it = items[i];
+    it.x -= it.speed;
+    if (it.x + it.width < 0) { items.splice(i,1); continue; }
+
+    if (player && isColliding(player, it)) {
+      if (it.type === "prize") {
+        // collect prize: remove item and trigger prize flow
         items.splice(i,1);
-      }    
+        playSound(sounds.buttonClick, 0.8);
+        // pause game by switching state so main loop doesn't process 'play' block
+        const previousState = state;
+        state = "prize"; // custom paused state
+
+        // show email popup
+        (function showEmailPopup(onDone){
+          const dlg = document.createElement("div");
+Object.assign(dlg.style, {
+  position: "fixed",
+  left: "50%",
+  top: "50%",
+  transform: "translate(-50%,-50%)",
+  background:"#050a0a",
+  color:"#00ff99",
+  padding:"18px",
+  border:"3px solid #00ff99",
+  borderRadius:"8px",
+  zIndex: 99999,
+  minWidth:"280px",
+  maxWidth:"92vw",
+  textAlign:"center",
+  fontFamily:"monospace"
+});
+
+const title = document.createElement("div");
+title.textContent = "Congratulations!";
+title.style.fontSize = "20px";
+title.style.marginBottom = "8px";
+
+const msg = document.createElement("div");
+msg.textContent = "Enter your email for a chance to win a prize from BOM:";
+msg.style.marginBottom = "12px";
+msg.style.fontSize = "14px";
+
+const input = document.createElement("input");
+input.type = "email";
+input.placeholder = "you@example.com";
+Object.assign(input.style, {
+  width:"92%",
+  padding:"8px",
+  fontSize:"15px",
+  marginBottom:"12px",
+  boxSizing:"border-box"
+});
+
+const submit = document.createElement("button");
+submit.textContent = "Submit";
+Object.assign(submit.style, { padding:"8px 14px", fontSize:"15px", marginRight:"8px" });
+
+const cancel = document.createElement("button");
+cancel.textContent = "Cancel";
+Object.assign(cancel.style, { padding:"8px 14px", fontSize:"15px" });
+
+dlg.appendChild(title);
+dlg.appendChild(msg);
+dlg.appendChild(input);
+dlg.appendChild(submit);
+dlg.appendChild(cancel);
+document.body.appendChild(dlg);
+
+function closeAndReturn(val) {
+  try { document.body.removeChild(dlg); } catch(e){}
+  onDone(val);
+}
+
+cancel.addEventListener("click", ()=> closeAndReturn(null));
+submit.addEventListener("click", ()=> closeAndReturn(input.value.trim() || null));
+input.addEventListener("keydown", e=>{
+  if (e.key === "Enter") { submit.click(); e.preventDefault(); }
+});
+        })(async function(collectedEmail){
+          // store email locally (restaurant can export later)
+          try {
+            const arr = JSON.parse(localStorage.getItem("prizeEmails")||"[]");
+            if (collectedEmail) {
+              arr.unshift({ email: collectedEmail, time: (new Date()).toISOString() });
+              // keep recent only
+              localStorage.setItem("prizeEmails", JSON.stringify(arr.slice(0,1000)));
+            }
+          } catch(e){}
+
+          // show countdown overlay 3-2-1 GO
+          await (function runCountdown() {
+            return new Promise(res => {
+              const ov = document.createElement("div");
+              Object.assign(ov.style, {
+                position:"fixed", left:0, top:0, width:"100vw", height:"100vh",
+                display:"flex", alignItems:"center", justifyContent:"center",
+background:"transparent", zIndex:99998, color:"#fff", fontFamily:"monospace"
+              });
+              const txt = document.createElement("div");
+              Object.assign(txt.style, { fontSize:"48px", color:"#00ff99", textAlign:"center" });
+              ov.appendChild(txt);
+              document.body.appendChild(ov);
+const seq = ["3","2","1","GO!"];
+let i = 0;
+
+const tick = () => {
+  txt.textContent = seq[i];
+  i++;
+
+  if (i < seq.length) {
+    setTimeout(tick, 800);
+  } else {
+    setTimeout(() => {
+      document.body.removeChild(ov);
+      res();
+    }, 800);
+  }
+};
+
+tick();
+            });
+          })();
+
+          // grant invincibility exactly like bombed behaviour
+          if (player) {
+            player.flashTimer = 15;
+            player.flashCount = 8;
+            player.flashVisible = false;
+            player.flashActive = true;
+          }
+
+          // resume play
+          state = "play";
+        });
+
+        // prize processed; don't also award normal food/drink points
+        continue;
+      }
+
+// ordinary food/drink collision
+if (it.type === "food") {
+
+  // detect EXACT food.png (not food1.png etc.)
+  const src = it.img?.src ?? "";
+  const isFoodPng = src.endsWith("food.png");
+
+  // if this is the exact food.png, increment collected counter
+  if (isFoodPng) {
+    _foodPngCounter++;
+
+    // if reached prize trigger
+    if (_foodPngCounter >= PRIZE_FREQUENCY) {
+      _foodPngCounter = 0;
+
+      // spawn the prize now
+      const pw = Math.max(28, Math.round(canvas.width * 0.08));
+      const ph = pw;
+      items.push({
+        type: "prize",
+        x: canvas.width,
+        y: Math.random() * (canvas.height - ph),
+        width: pw,
+        height: ph,
+        img: prizeImg,
+        speed: scrollSpeed + 2 + level * 0.5
+      });
     }
   }
+
+  score += 50;
+  playSound(sounds.eat, 0.7);
+} else {
+  // drink
+  score += 20;
+  playSound(sounds.drink, 0.7);
+}
+
+items.splice(i,1);
+
+    }
+  }
+}
 
   function drawItems(){
     for(const it of items) ctx.drawImage(it.img,it.x,it.y,it.width,it.height);
@@ -411,7 +592,7 @@
     ctx.save(); ctx.fillStyle='white'; ctx.textAlign='center';
     const titleSize=Math.max(canvas.height*0.06,24);
     ctx.font=titleSize+'px Arial';
-    ctx.fillText('using the arrow keys',canvas.width/2,canvas.height*0.09);
+    ctx.fillText('using the arrow keys/joystick',canvas.width/2,canvas.height*0.09);
     ctx.fillText('Dodge the farmyard animals to rescue food for Moon Base 1',canvas.width/2,canvas.height*0.09+titleSize*1.2);
     ctx.fillText('but watch out for that Crazy Chicken!!',canvas.width/2,canvas.height*0.09+titleSize*2.4);
     const subSize=Math.max(canvas.height*0.045,18);
@@ -733,6 +914,14 @@ const Y = (canvas.height - H) / 2;
         player.flashVisible = true;   
         player.flashActive = false;   
       }
+    } else if (state === "prize") {
+      // draw frozen visuals while email dialog is up
+      drawBackground();
+      drawPlayer();
+      drawItems();
+      drawEnemies();
+      drawHUD();
+      updateAndDrawLevelBanner();
 
     } else if (state === "gameover") {
       drawGameOver();
