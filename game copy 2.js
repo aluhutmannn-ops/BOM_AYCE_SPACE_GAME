@@ -1,4 +1,4 @@
- f(() => {
+(() => {
   const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");
 
@@ -231,32 +231,6 @@ function spawnItem(){
       width = height * (choice.img.width / choice.img.height);
     }
 
-    // If this choice is the specific "food.png" (exact match on filename),
-    // count it and when the counter reaches PRIZE_FREQUENCY spawn a prize instead.
-    // We check by looking for 'food.png' at the end of the image src.
-    const src = (choice.img && choice.img.src) ? choice.img.src : "";
-    const isFoodPng = src.indexOf("food.png") !== -1 || src.endsWith("/food.png");
-
-    if (isFoodPng) {
-      _foodPngCounter++;
-      if (_foodPngCounter >= PRIZE_FREQUENCY) {
-        // spawn prize instead of this food
-        _foodPngCounter = 0;
-        const pw = Math.max(28, Math.round(canvas.width * 0.08));
-        const ph = pw;
-        items.push({
-          type: "prize",
-          x: canvas.width + n * 50,
-          y: Math.random() * (canvas.height - ph),
-          width: pw,
-          height: ph,
-          img: prizeImg,
-          speed: scrollSpeed + 2 + level * 0.5
-        });
-        continue; // next n
-      }
-    }
-
     // normal food/drink push
     items.push({
       type: choice.type,
@@ -269,7 +243,6 @@ function spawnItem(){
     });
   }
 }
-
   function spawnEnemy(){
     const count = 1 + Math.floor(Math.random()*3); 
     for (let n=0;n<count;n++) {
@@ -309,48 +282,70 @@ function spawnItem(){
 
         // show email popup
         (function showEmailPopup(onDone){
-          const ov = document.createElement("div");
-          Object.assign(ov.style, {
-            position: "fixed", left:0, top:0, width:"100vw", height:"100vh",
-            display:"flex", alignItems:"center", justifyContent:"center",
-            background:"rgba(0,0,0,0.6)", zIndex: 99999, fontFamily:"monospace"
-          });
           const dlg = document.createElement("div");
-          Object.assign(dlg.style, {
-            background:"#050a0a", color:"#00ff99", padding:"18px", border:"3px solid #00ff99",
-            borderRadius:"8px", minWidth:"280px", maxWidth:"92vw", textAlign:"center"
-          });
-          const title = document.createElement("div");
-          title.textContent = "Congratulations!";
-          title.style.fontSize = "20px"; title.style.marginBottom = "8px";
-          const msg = document.createElement("div");
-          msg.textContent = "Enter your email for a chance to win a prize from BOM:";
-          msg.style.marginBottom = "12px"; msg.style.fontSize = "14px";
-          const input = document.createElement("input");
-          input.type = "email";
-          input.placeholder = "you@example.com";
-          Object.assign(input.style, { width:"92%", padding:"8px", fontSize:"15px", marginBottom:"12px", boxSizing:"border-box" });
-          const btnWrap = document.createElement("div");
-          const submit = document.createElement("button");
-          submit.textContent = "Submit";
-          Object.assign(submit.style, { padding:"8px 14px", fontSize:"15px", marginRight:"8px" });
-          const cancel = document.createElement("button");
-          cancel.textContent = "Cancel";
-          Object.assign(cancel.style, { padding:"8px 14px", fontSize:"15px" });
-          btnWrap.appendChild(submit); btnWrap.appendChild(cancel);
-          dlg.appendChild(title); dlg.appendChild(msg); dlg.appendChild(input); dlg.appendChild(btnWrap);
-          ov.appendChild(dlg);
-          document.body.appendChild(ov);
-          input.focus();
+Object.assign(dlg.style, {
+  position: "fixed",
+  left: "50%",
+  top: "50%",
+  transform: "translate(-50%,-50%)",
+  background:"#050a0a",
+  color:"#00ff99",
+  padding:"18px",
+  border:"3px solid #00ff99",
+  borderRadius:"8px",
+  zIndex: 99999,
+  minWidth:"280px",
+  maxWidth:"92vw",
+  textAlign:"center",
+  fontFamily:"monospace"
+});
 
-          function closeAndReturn(val) {
-            try { document.body.removeChild(ov); } catch(e){}
-            onDone(val);
-          }
+const title = document.createElement("div");
+title.textContent = "Congratulations!";
+title.style.fontSize = "20px";
+title.style.marginBottom = "8px";
 
-          cancel.addEventListener("click", ()=>{ closeAndReturn(null); });
-          submit.addEventListener("click", ()=>{ closeAndReturn(input.value.trim() || null); });
-          input.addEventListener("keydown", (e)=>{ if (e.key === "Enter") { submit.click(); e.preventDefault(); } });
+const msg = document.createElement("div");
+msg.textContent = "Enter your email for a chance to win a prize from BOM:";
+msg.style.marginBottom = "12px";
+msg.style.fontSize = "14px";
+
+const input = document.createElement("input");
+input.type = "email";
+input.placeholder = "you@example.com";
+Object.assign(input.style, {
+  width:"92%",
+  padding:"8px",
+  fontSize:"15px",
+  marginBottom:"12px",
+  boxSizing:"border-box"
+});
+
+const submit = document.createElement("button");
+submit.textContent = "Submit";
+Object.assign(submit.style, { padding:"8px 14px", fontSize:"15px", marginRight:"8px" });
+
+const cancel = document.createElement("button");
+cancel.textContent = "Cancel";
+Object.assign(cancel.style, { padding:"8px 14px", fontSize:"15px" });
+
+dlg.appendChild(title);
+dlg.appendChild(msg);
+dlg.appendChild(input);
+dlg.appendChild(submit);
+dlg.appendChild(cancel);
+document.body.appendChild(dlg);
+
+function closeAndReturn(val) {
+  try { document.body.removeChild(dlg); } catch(e){}
+  onDone(val);
+}
+
+cancel.addEventListener("click", ()=> closeAndReturn(null));
+submit.addEventListener("click", ()=> closeAndReturn(input.value.trim() || null));
+input.addEventListener("keydown", e=>{
+  if (e.key === "Enter") { submit.click(); e.preventDefault(); }
+});
         })(async function(collectedEmail){
           // store email locally (restaurant can export later)
           try {
@@ -369,21 +364,30 @@ function spawnItem(){
               Object.assign(ov.style, {
                 position:"fixed", left:0, top:0, width:"100vw", height:"100vh",
                 display:"flex", alignItems:"center", justifyContent:"center",
-                background:"rgba(0,0,0,0.6)", zIndex:99998, color:"#fff", fontFamily:"monospace"
+background:"transparent", zIndex:99998, color:"#fff", fontFamily:"monospace"
               });
               const txt = document.createElement("div");
               Object.assign(txt.style, { fontSize:"48px", color:"#00ff99", textAlign:"center" });
               ov.appendChild(txt);
               document.body.appendChild(ov);
-              const seq = ["3","2","1","GO!"];
-              let i = 0;
-              const tick = () => {
-                txt.textContent = seq[i++];
-                if (i <= seq.length) {
-                  setTimeout(()=> { if (i <= seq.length) tick(); else { try { document.body.removeChild(ov); } catch(e){}; res(); } }, 800);
-                }
-              };
-              tick();
+const seq = ["3","2","1","GO!"];
+let i = 0;
+
+const tick = () => {
+  txt.textContent = seq[i];
+  i++;
+
+  if (i < seq.length) {
+    setTimeout(tick, 800);
+  } else {
+    setTimeout(() => {
+      document.body.removeChild(ov);
+      res();
+    }, 800);
+  }
+};
+
+tick();
             });
           })();
 
@@ -403,10 +407,46 @@ function spawnItem(){
         continue;
       }
 
-      // ordinary food/drink collision
-      score += it.type === "food" ? 50 : 20;
-      playSound(it.type === "food" ? sounds.eat : sounds.drink, 0.7);
-      items.splice(i,1);
+// ordinary food/drink collision
+if (it.type === "food") {
+
+  // detect EXACT food.png (not food1.png etc.)
+  const src = it.img?.src ?? "";
+  const isFoodPng = src.endsWith("food.png");
+
+  // if this is the exact food.png, increment collected counter
+  if (isFoodPng) {
+    _foodPngCounter++;
+
+    // if reached prize trigger
+    if (_foodPngCounter >= PRIZE_FREQUENCY) {
+      _foodPngCounter = 0;
+
+      // spawn the prize now
+      const pw = Math.max(28, Math.round(canvas.width * 0.08));
+      const ph = pw;
+      items.push({
+        type: "prize",
+        x: canvas.width,
+        y: Math.random() * (canvas.height - ph),
+        width: pw,
+        height: ph,
+        img: prizeImg,
+        speed: scrollSpeed + 2 + level * 0.5
+      });
+    }
+  }
+
+  score += 50;
+  playSound(sounds.eat, 0.7);
+} else {
+  // drink
+  score += 20;
+  playSound(sounds.drink, 0.7);
+}
+
+items.splice(i,1);
+
     }
   }
 }
@@ -874,6 +914,14 @@ const Y = (canvas.height - H) / 2;
         player.flashVisible = true;   
         player.flashActive = false;   
       }
+    } else if (state === "prize") {
+      // draw frozen visuals while email dialog is up
+      drawBackground();
+      drawPlayer();
+      drawItems();
+      drawEnemies();
+      drawHUD();
+      updateAndDrawLevelBanner();
 
     } else if (state === "gameover") {
       drawGameOver();

@@ -939,30 +939,37 @@ const Y = (canvas.height - H) / 2;
 
   const joystick = document.createElement("div");
   const stick = document.createElement("div");
+  function layoutJoystick() {
+  const size = Math.min(canvas.width, canvas.height) * 0.18;
+  const inner = size * 0.42;
+
   Object.assign(joystick.style, {
     position: "absolute",
-    left: "20px",
-    bottom: "20px",
-    width: "120px",
-    height: "120px",
+    left: `${canvas.width * 0.04}px`,
+    bottom: `${canvas.height * 0.06}px`,
+    width: `${size}px`,
+    height: `${size}px`,
     background: "rgba(255,255,255,0.3)",
     borderRadius: "50%",
     display: "none",
     zIndex: 1000,
     touchAction: "none"
   });
+
   Object.assign(stick.style, {
     position: "absolute",
     left: "50%",
     top: "50%",
-    width: "50px",
-    height: "50px",
-    background: "rgba(255,255,255,0.8)",
+    width: `${inner}px`,
+    height: `${inner}px`,
+    background: "rgba(255,255,255,0.6)",
     borderRadius: "50%",
-    transform: "translate(-50%,-50%)",
-    touchAction: "none"
+    transform: "translate(-50%, -50%)"
   });
-  joystick.appendChild(stick);
+}
+ layoutJoystick();
+window.addEventListener("resize", layoutJoystick);
+ joystick.appendChild(stick);
   document.body.appendChild(joystick);
 
   let joyActive = false;
