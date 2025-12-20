@@ -399,8 +399,21 @@ tick();
             player.flashActive = true;
           }
 
-          // resume play
-          state = "play";
+         // resume play
+state = "play";
+
+// recalc joystick layout for current canvas size
+layoutJoystick();
+joystick.style.display = 'block';
+stick.style.transform = 'translate(-50%,-50%)';
+joyActive = false;
+
+// ensure player stays within visible canvas
+if (player) {
+  player.x = Math.min(Math.max(player.x, 0), canvas.width - player.width);
+  player.y = Math.min(Math.max(player.y, 0), canvas.height - player.height);
+}
+
         });
 
         // prize processed; don't also award normal food/drink points
