@@ -964,7 +964,7 @@ const Y = (canvas.height - H) / 2;
     height: `${size}px`,
     background: "rgba(255,255,255,0.3)",
     borderRadius: "50%",
-    display: "none",
+    display: "block",
     zIndex: 1000,
     touchAction: "none"
   });
@@ -1066,10 +1066,6 @@ window.addEventListener("resize", layoutJoystick);
     // If we reach here and state is play -> start joystick
     if (state !== "play") return;
     const touch = e.touches[0];
-    // show joystick fixed at bottom-left
-    joystick.style.left = `20px`;
-    joystick.style.bottom = `20px`;
-    joystick.style.display = "block";
     // reset stick to center visually
     stick.style.transform = "translate(-50%,-50%)";
     joyActive = true;
