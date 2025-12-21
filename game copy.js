@@ -953,7 +953,7 @@ const Y = (canvas.height - H) / 2;
   const joystick = document.createElement("div");
   const stick = document.createElement("div");
   function layoutJoystick() {
-  const size = Math.min(canvas.width, canvas.height) * 0.55;
+  const size = Math.min(canvas.width, canvas.height) * 0.18;
   const inner = size * 0.42;
 
   Object.assign(joystick.style, {
