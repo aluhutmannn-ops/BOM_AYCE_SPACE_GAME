@@ -1101,8 +1101,8 @@ window.addEventListener("resize", layoutJoystick);
   canvas.addEventListener("touchend", e=>{
     // release joystick
     joyActive = false;
-    joystick.style.left = `25px`;
-    joystick.style.bottom = `40px`;
+    joystick.style.left = `100px`;
+    joystick.style.bottom = `100px`;
     stick.style.transform = "translate(-50%,-50%)"; 
     e.preventDefault();
   }, { passive: false });
