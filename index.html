@@ -22,54 +22,14 @@
       touch-action: none;
     }
 
-    #joystick-container {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      width: 120px;
-      height: 120px;
-      display: none; /* hidden by default */
-      z-index: 10;
-      touch-action: none;
-    }
-
-    .joystick-base {
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 50%;
-      position: relative;
-    }
-
-    .joystick-stick {
-      width: 60px;
-      height: 60px;
-      background: rgba(255, 255, 255, 0.4);
-      border-radius: 50%;
-      position: absolute;
-      top: 30px;
-      left: 30px;
-      transform: translate(-50%, -50%);
-    }
-  </style>
+   </style>
 </head>
 <body>
   <canvas id="gameCanvas" width="800" height="600"></canvas>
 
-  <!-- Virtual Joystick Container -->
-  <div id="joystick-container">
-    <div class="joystick-base">
-      <div class="joystick-stick" id="joystick-stick"></div>
-    </div>
-  </div>
+ 
 
-  <script>
-    // Show joystick only on touch devices
-    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-      document.getElementById('joystick-container').style.display = 'block';
-    }
-  </script>
-
+  
   <script src="game copy.js"></script>
 </body>
 </html>
