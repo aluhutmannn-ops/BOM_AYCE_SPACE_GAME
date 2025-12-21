@@ -953,7 +953,7 @@ const Y = (canvas.height - H) / 2;
   const joystick = document.createElement("div");
   const stick = document.createElement("div");
   function layoutJoystick() {
-  const size = Math.min(canvas.width, canvas.height) * 0.33;
+  const size = Math.min(canvas.width, canvas.height) * 0.55;
   const inner = size * 0.42;
 
   Object.assign(joystick.style, {
@@ -1102,7 +1102,7 @@ window.addEventListener("resize", layoutJoystick);
     // release joystick
     joyActive = false;
     joystick.style.left = `25px`;
-    joystick.style.bottom = `25px`;
+    joystick.style.bottom = `40px`;
     stick.style.transform = "translate(-50%,-50%)"; 
     e.preventDefault();
   }, { passive: false });
