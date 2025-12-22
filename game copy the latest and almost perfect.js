@@ -399,8 +399,21 @@ tick();
             player.flashActive = true;
           }
 
-          // resume play
-          state = "play";
+         // resume play
+state = "play";
+
+// recalc joystick layout for current canvas size
+layoutJoystick();
+joystick.style.display = 'block';
+stick.style.transform = 'translate(-50%,-50%)';
+joyActive = false;
+
+// ensure player stays within visible canvas
+if (player) {
+  player.x = Math.min(Math.max(player.x, 0), canvas.width - player.width);
+  player.y = Math.min(Math.max(player.y, 0), canvas.height - player.height);
+}
+
         });
 
         // prize processed; don't also award normal food/drink points
@@ -939,30 +952,37 @@ const Y = (canvas.height - H) / 2;
 
   const joystick = document.createElement("div");
   const stick = document.createElement("div");
+  function layoutJoystick() {
+  const size = Math.min(canvas.width, canvas.height) * 0.33;
+  const inner = size * 0.42;
+
   Object.assign(joystick.style, {
     position: "absolute",
-    left: "20px",
-    bottom: "20px",
-    width: "120px",
-    height: "120px",
+    left: `${canvas.width * 0.04}px`,
+    bottom: `${canvas.height * 0.06}px`,
+    width: `${size}px`,
+    height: `${size}px`,
     background: "rgba(255,255,255,0.3)",
     borderRadius: "50%",
-    display: "none",
+    display: "block",
     zIndex: 1000,
     touchAction: "none"
   });
+
   Object.assign(stick.style, {
     position: "absolute",
     left: "50%",
     top: "50%",
-    width: "50px",
-    height: "50px",
-    background: "rgba(255,255,255,0.8)",
+    width: `${inner}px`,
+    height: `${inner}px`,
+    background: "rgba(255,255,255,0.6)",
     borderRadius: "50%",
-    transform: "translate(-50%,-50%)",
-    touchAction: "none"
+    transform: "translate(-50%, -50%)"
   });
-  joystick.appendChild(stick);
+}
+ layoutJoystick();
+window.addEventListener("resize", layoutJoystick);
+ joystick.appendChild(stick);
   document.body.appendChild(joystick);
 
   let joyActive = false;
@@ -1046,10 +1066,6 @@ const Y = (canvas.height - H) / 2;
     // If we reach here and state is play -> start joystick
     if (state !== "play") return;
     const touch = e.touches[0];
-    // show joystick fixed at bottom-left
-    joystick.style.left = `20px`;
-    joystick.style.bottom = `20px`;
-    joystick.style.display = "block";
     // reset stick to center visually
     stick.style.transform = "translate(-50%,-50%)";
     joyActive = true;
@@ -1085,8 +1101,8 @@ const Y = (canvas.height - H) / 2;
   canvas.addEventListener("touchend", e=>{
     // release joystick
     joyActive = false;
-    joystick.style.left = `20px`;
-    joystick.style.bottom = `20px`;
+    joystick.style.left = `25px`;
+    joystick.style.bottom = `25px`;
     stick.style.transform = "translate(-50%,-50%)"; 
     e.preventDefault();
   }, { passive: false });
