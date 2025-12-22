@@ -958,8 +958,8 @@ const Y = (canvas.height - H) / 2;
 
   Object.assign(joystick.style, {
     position: "absolute",
-    left: `${canvas.width * 0.05}px`,
-    bottom: `${canvas.height * 0.10}px`,
+    left: `${canvas.width * 0.04}px`,
+    bottom: `${canvas.height * 0.60}px`,
     width: `${size}px`,
     height: `${size}px`,
     background: "rgba(255,255,255,0.3)",
