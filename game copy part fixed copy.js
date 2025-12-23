@@ -107,6 +107,7 @@
     snd.pause();
     snd.currentTime = 0;
   }
+const isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
   let state = "intro";  // possible values: "intro", "start", "play", "gameover"
   hideJoystick();
   let selectedPlayer = null, playerImg = null;
@@ -949,7 +950,7 @@ const Y = (canvas.height - H) / 2;
     borderRadius: "50%",
     display: "none",
     zIndex: 1000,
-    touchAction: "none",
+    touchAction: "none"
     pointerEvents: "none"
   });
   Object.assign(stick.style, {
@@ -961,7 +962,7 @@ const Y = (canvas.height - H) / 2;
     background: "rgba(255,255,255,0.8)",
     borderRadius: "50%",
     transform: "translate(-50%,-50%)",
-    touchAction: "none",
+    touchAction: "none"
     pointerEvents: "none"
   });
   joystick.appendChild(stick);
@@ -1013,9 +1014,9 @@ function hideJoystick() {
         playSound(sounds.startScreen, 0.5);
         bgX = 0;
         state = "start";
-        hideJoystick();
-        e.preventDefault();
-        return;
+            hideJoystick();
+            e.preventDefault();
+            return;
       }
     }
 
@@ -1026,11 +1027,14 @@ function hideJoystick() {
           playSound(sounds.buttonClick);
           selectedPlayer = b.index;
           playerImg = characters[b.index].img;
-          resetGame();
-          stopSound(sounds.startScreen);
-          playSound(sounds.gameBG, 0.6);
-          state = "play";
-          showJoystick();
+          setTimeout(()=>{
+            resetGame();
+            stopSound(sounds.startScreen);
+            playSound(sounds.gameBG, 0.6);
+            state = "play";
+            showJoystick();
+            // spawning via frame counters will handle auto-spawn
+          },200);
           e.preventDefault();
           return;
         }
@@ -1042,15 +1046,16 @@ function hideJoystick() {
       const b = drawHighScoreConsole._btn;
       if (b && pos.x >= b.x && pos.x <= b.x+b.w && pos.y >= b.y && pos.y <= b.y+b.h) {
         playSound(sounds.buttonClick);
-        resetGame();  
-        resetHighScoreEditing();
-        gameOverAnim = null;             
-        selectedPlayer = null;           
-        bgX = 0;
-        stopSound(sounds.gameBG);
-        playSound(sounds.startScreen, 0.5);
-        state = "start";  
-        hideJoystick();
+        setTimeout(()=>{
+          resetGame();  
+          resetHighScoreEditing();
+          gameOverAnim = null;             
+          selectedPlayer = null;           
+          bgX = 0;
+          stopSound(sounds.gameBG);
+          playSound(sounds.startScreen, 0.5);
+          state = "start";  
+        }, 200);
         e.preventDefault();
         return;
       }
@@ -1090,6 +1095,8 @@ function hideJoystick() {
   canvas.addEventListener("touchend", e=>{
     // release joystick
     joyActive = false;
+    joystick.style.left = `20px`;
+    joystick.style.bottom = `20px`;
     stick.style.transform = "translate(-50%,-50%)"; 
     e.preventDefault();
   }, { passive: false });
@@ -1109,8 +1116,8 @@ function hideJoystick() {
         playSound(sounds.startScreen, 0.5);
         bgX = 0;
         state = "start";
-        hideJoystick();
-        return;
+            hideJoystick();
+            return;
       }
     }
 
@@ -1120,11 +1127,14 @@ function hideJoystick() {
           playSound(sounds.buttonClick);
           selectedPlayer = b.index;
           playerImg = characters[b.index].img;
-          resetGame();
-          stopSound(sounds.startScreen);
-          playSound(sounds.gameBG, 0.6);
-          state = "play";
-          showJoystick();
+          setTimeout(()=>{
+            resetGame();
+            stopSound(sounds.startScreen);
+            playSound(sounds.gameBG, 0.6);
+            state = "play";
+            showJoystick();
+            // frame-based spawning handles automatic spawning
+          },200);
           break;
         }
       }
@@ -1133,15 +1143,17 @@ function hideJoystick() {
       const b = drawHighScoreConsole._btn;
       if (b && mx >= b.x && mx <= b.x+b.w && my >= b.y && my <= b.y+b.h) {
         playSound(sounds.buttonClick);
-        resetGame();  
-        resetHighScoreEditing();
-        gameOverAnim = null;             
-        selectedPlayer = null;           
-        bgX = 0;
-        stopSound(sounds.gameBG);
-        playSound(sounds.startScreen, 0.5);
-        state = "start";  
-        hideJoystick();
+        setTimeout(()=>{
+          resetGame();  
+          resetHighScoreEditing();
+          gameOverAnim = null;             
+          selectedPlayer = null;           
+          bgX = 0;
+          stopSound(sounds.gameBG);
+          playSound(sounds.startScreen, 0.5);
+          state = "start";  
+          hideJoystick();
+        }, 200);
       }
     }
   });
