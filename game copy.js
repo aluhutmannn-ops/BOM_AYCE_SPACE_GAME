@@ -90,7 +90,7 @@
   // loop background music
   sounds.startScreen.audio.loop = true;
   sounds.gameBG.audio.loop = true;
-
+  const isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
   // helpers
   function playSound(soundEntry, overrideVolume = null) {
     if (!soundEntry || !soundEntry.audio) return;
@@ -107,9 +107,9 @@
     snd.pause();
     snd.currentTime = 0;
   }
-
+const isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
   let state = "intro";  // possible values: "intro", "start", "play", "gameover"
-
+  hideJoystick();
   let selectedPlayer = null, playerImg = null;
   let bgX, score, level, scrollSpeed, player, keys, items = [], enemies = [];
   let characterBounds = [];
@@ -896,6 +896,7 @@ const Y = (canvas.height - H) / 2;
           explosion.visible = false;
           if (player.dead) {
             state = "gameover";
+            hideJoystick();
             player.dead = false; 
             stopSound(sounds.gameBG);
             playSound(sounds.ending, 0.8);
@@ -950,6 +951,7 @@ const Y = (canvas.height - H) / 2;
     display: "none",
     zIndex: 1000,
     touchAction: "none"
+    pointerEvents: "none"
   });
   Object.assign(stick.style, {
     position: "absolute",
@@ -961,10 +963,24 @@ const Y = (canvas.height - H) / 2;
     borderRadius: "50%",
     transform: "translate(-50%,-50%)",
     touchAction: "none"
+    pointerEvents: "none"
   });
   joystick.appendChild(stick);
   document.body.appendChild(joystick);
+function showJoystick() {
+  if (!isMobile) return;
+  joystick.style.display = "block";
+  joystick.style.left = "20px";
+  joystick.style.bottom = "20px";
+  stick.style.transform = "translate(-50%,-50%)";
+  joyActive = false;  // Reset to idle state
+}
 
+function hideJoystick() {
+  if (!isMobile) return;
+  joystick.style.display = "none";
+  joyActive = false;
+}
   let joyActive = false;
 
   // === helper to get canvas-relative coords ===
@@ -998,8 +1014,9 @@ const Y = (canvas.height - H) / 2;
         playSound(sounds.startScreen, 0.5);
         bgX = 0;
         state = "start";
-        e.preventDefault();
-        return;
+            hideJoystick();
+            e.preventDefault();
+            return;
       }
     }
 
@@ -1015,6 +1032,7 @@ const Y = (canvas.height - H) / 2;
             stopSound(sounds.startScreen);
             playSound(sounds.gameBG, 0.6);
             state = "play";
+            showJoystick();
             // spawning via frame counters will handle auto-spawn
           },200);
           e.preventDefault();
@@ -1043,18 +1061,10 @@ const Y = (canvas.height - H) / 2;
       }
     }
 
-    // If we reach here and state is play -> start joystick
-    if (state !== "play") return;
-    const touch = e.touches[0];
-    // show joystick fixed at bottom-left
-    joystick.style.left = `20px`;
-    joystick.style.bottom = `20px`;
-    joystick.style.display = "block";
-    // reset stick to center visually
-    stick.style.transform = "translate(-50%,-50%)";
-    joyActive = true;
-    e.preventDefault();
-  }, { passive: false });
+// If we reach here and state is play -> activate joystick control
+  if (state !== "play") return;
+  joyActive = true;
+  e.preventDefault();
 
   canvas.addEventListener("touchmove", e=>{
     if(!joyActive) return;
@@ -1106,7 +1116,8 @@ const Y = (canvas.height - H) / 2;
         playSound(sounds.startScreen, 0.5);
         bgX = 0;
         state = "start";
-        return;
+            hideJoystick();
+            return;
       }
     }
 
@@ -1121,6 +1132,7 @@ const Y = (canvas.height - H) / 2;
             stopSound(sounds.startScreen);
             playSound(sounds.gameBG, 0.6);
             state = "play";
+            showJoystick();
             // frame-based spawning handles automatic spawning
           },200);
           break;
@@ -1140,6 +1152,7 @@ const Y = (canvas.height - H) / 2;
           stopSound(sounds.gameBG);
           playSound(sounds.startScreen, 0.5);
           state = "start";  
+          hideJoystick();
         }, 200);
       }
     }
