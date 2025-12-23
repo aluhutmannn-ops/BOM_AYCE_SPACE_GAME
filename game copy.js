@@ -107,7 +107,7 @@
     snd.pause();
     snd.currentTime = 0;
   }
-const isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
   let state = "intro";  // possible values: "intro", "start", "play", "gameover"
   hideJoystick();
   let selectedPlayer = null, playerImg = null;
