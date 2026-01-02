@@ -737,7 +737,6 @@ input.addEventListener("keydown", e=>{
 
     // If we reach here and state is play -> start joystick
     if (state !== "play") return;
-    const touch = e.touches[0];
     // reset stick to center visually
     stick.style.transform = "translate(-50%,-50%)";
     joyActive = true;
