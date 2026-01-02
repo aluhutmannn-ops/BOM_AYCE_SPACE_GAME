@@ -457,22 +457,22 @@ items.splice(i,1);
 
   function updateEnemies() {
     for (let i = enemies.length - 1; i >= 0; i--) {
-      const en = enemies[i];
-      en.x -= en.speed;
+      const e = enemies[i];
+      e.x -= e.speed;
 
-      if (en.type === "chicken") {
-        en.y += en.vy;
-        if (en.y <= 0) { en.y = 0; en.vy *= -1; }
-        if (en.y + en.height >= canvas.height) { en.y = canvas.height - en.height; en.vy *= -1; }
-        en.rotation += en.rotSpeed;
+      if (e.type === "chicken") {
+        e.y += e.vy;
+        if (e.y <= 0) { e.y = 0; e.vy *= -1; }
+        if (e.y + e.height >= canvas.height) { e.y = canvas.height - e.height; e.vy *= -1; }
+        e.rotation += e.rotSpeed;
       }
 
-      if (en.x + en.width < 0) {
+      if (e.x + e.width < 0) {
         enemies.splice(i, 1);
         continue;
       }
 
-      if (player && !player.flashActive && isColliding(player, en)) {
+      if (player && !player.flashActive && isColliding(player, e)) {
         player.lives--;
         explosion.x = player.x;
         explosion.y = player.y;
@@ -483,11 +483,6 @@ items.splice(i,1);
 
         if (player.lives <= 0) {
           player.dead = true;
-          hideJoystick();
-          state = "gameover";
-          player.dead = false; 
-          stopSound(sounds.gameBG);
-          playSound(sounds.ending, 0.8);
         }
 
         // start flashing (invulnerability period)
@@ -969,18 +964,6 @@ const Y = (canvas.height - H) / 2;
   });
   joystick.appendChild(stick);
   document.body.appendChild(joystick);
-  hideJoystick();
-
-  function showJoystick() {
-    joystick.style.left = `20px`;
-    joystick.style.bottom = `20px`;
-    joystick.style.display = "block";
-    stick.style.transform = "translate(-50%,-50%)";
-  }
-
-  function hideJoystick() {
-    joystick.style.display = "none";
-  }
 
   let joyActive = false;
 
@@ -1001,7 +984,7 @@ const Y = (canvas.height - H) / 2;
 
   // Touch start (also used for mobile Play button etc)
   canvas.addEventListener("touchstart", e=>{
-    // handle short-circuit for short/intro/gameover interactions below
+    // handle short-circuit for start/intro/gameover interactions below
     const t = e.touches[0];
     const pos = getTouchPosOnCanvas(t);
 
@@ -1032,7 +1015,6 @@ const Y = (canvas.height - H) / 2;
             stopSound(sounds.startScreen);
             playSound(sounds.gameBG, 0.6);
             state = "play";
-            showJoystick();
             // spawning via frame counters will handle auto-spawn
           },200);
           e.preventDefault();
@@ -1063,6 +1045,11 @@ const Y = (canvas.height - H) / 2;
 
     // If we reach here and state is play -> start joystick
     if (state !== "play") return;
+    const touch = e.touches[0];
+    // show joystick fixed at bottom-left
+    joystick.style.left = `20px`;
+    joystick.style.bottom = `20px`;
+    joystick.style.display = "block";
     // reset stick to center visually
     stick.style.transform = "translate(-50%,-50%)";
     joyActive = true;
@@ -1134,7 +1121,6 @@ const Y = (canvas.height - H) / 2;
             stopSound(sounds.startScreen);
             playSound(sounds.gameBG, 0.6);
             state = "play";
-            showJoystick();
             // frame-based spawning handles automatic spawning
           },200);
           break;
