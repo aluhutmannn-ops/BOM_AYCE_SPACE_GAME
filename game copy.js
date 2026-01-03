@@ -1057,10 +1057,11 @@ hideJoystick();
 if (state !== "play") {
   hideJoystick();
   joyActive = false;
+  e.preventDefault();
   return;
 }
 
-// Now we ARE playing → allow joystick
+// Now we ARE playing → show joystick
 joystick.style.left = `20px`;
 joystick.style.bottom = `20px`;
 showJoystick();
