@@ -1045,7 +1045,7 @@ hideJoystick();
           bgX = 0;
           stopSound(sounds.gameBG);
           playSound(sounds.startScreen, 0.5);
-          hideJoystick():
+          hideJoystick();
           state = "start";  
         }, 200);
         e.preventDefault();
