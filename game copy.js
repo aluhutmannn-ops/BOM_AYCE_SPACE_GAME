@@ -1053,22 +1053,18 @@ hideJoystick();
       }
     }
 
-// If not playing, never show joystick
-if (state !== "play") {
-  hideJoystick();
-  joyActive = false;
-  e.preventDefault();
-  return;
-}
-
-// Now we ARE playing → show joystick
-joystick.style.left = `20px`;
-joystick.style.bottom = `20px`;
-showJoystick();
-stick.style.transform = "translate(-50%,-50%)";
-joyActive = true;
-e.preventDefault();
-
+    // If we reach here and state is play -> start joystick
+    if (state !== "play") return;
+    const touch = e.touches[0];
+    // show joystick fixed at bottom-left
+    joystick.style.left = `20px`;
+    joystick.style.bottom = `20px`;
+    joystick.style.display = "block";
+    // reset stick to center visually
+    stick.style.transform = "translate(-50%,-50%)";
+    joyActive = true;
+    e.preventDefault();
+  }, { passive: false });
 
   canvas.addEventListener("touchmove", e=>{
     if(!joyActive) return;
