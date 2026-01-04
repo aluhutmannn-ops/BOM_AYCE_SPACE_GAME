@@ -964,7 +964,15 @@ const Y = (canvas.height - H) / 2;
   });
   joystick.appendChild(stick);
   document.body.appendChild(joystick);
+  function showJoystick() {
+    joystick.style.display = "block";
+  }
 
+function hideJoystick() {
+  joystick.style.display = "none";
+}
+
+hideJoystick();
   let joyActive = false;
 
   // === helper to get canvas-relative coords ===
@@ -1015,6 +1023,7 @@ const Y = (canvas.height - H) / 2;
             stopSound(sounds.startScreen);
             playSound(sounds.gameBG, 0.6);
             state = "play";
+            showJoystick();
             // spawning via frame counters will handle auto-spawn
           },200);
           e.preventDefault();
@@ -1121,6 +1130,7 @@ const Y = (canvas.height - H) / 2;
             stopSound(sounds.startScreen);
             playSound(sounds.gameBG, 0.6);
             state = "play";
+            showJoystick();
             // frame-based spawning handles automatic spawning
           },200);
           break;
