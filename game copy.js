@@ -895,6 +895,7 @@ const Y = (canvas.height - H) / 2;
         if (explosion.timer <= 0) {
           explosion.visible = false;
           if (player.dead) {
+            hideJoystick();
             state = "gameover";
             player.dead = false; 
             stopSound(sounds.gameBG);
@@ -1150,6 +1151,7 @@ hideJoystick();
           bgX = 0;
           stopSound(sounds.gameBG);
           playSound(sounds.startScreen, 0.5);
+          hideJoystick();
           state = "start";  
         }, 200);
       }
