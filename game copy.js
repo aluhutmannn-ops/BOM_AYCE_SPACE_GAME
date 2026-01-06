@@ -136,6 +136,7 @@
     // reset HS prompt flag 
     drawGameOver._didHS = false;
     levelBanner = null; 
+    _foodPngCounter = 0;
   }
 
   function drawIntroScreen() {
@@ -416,13 +417,13 @@ if (it.type === "food") {
 
   // if this is the exact food.png, increment collected counter
   if (isFoodPng) {
-    _foodPngCounter++;
+    if (_foodPngCounter >= 0) {
+      _foodPngCounter++;
 
-    // if reached prize trigger
-    if (_foodPngCounter >= PRIZE_FREQUENCY) {
-      _foodPngCounter = 0;
+      if (_foodPngCounter >= PRIZE_FREQUENCY) {
+        _foodPngCounter = -1;
 
-      // spawn the prize now
+        // spawn the prize now
       const pw = Math.max(28, Math.round(canvas.width * 0.08));
       const ph = pw;
       items.push({
