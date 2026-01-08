@@ -276,10 +276,10 @@ function spawnItem(){
         // collect prize: remove item and trigger prize flow
         items.splice(i,1);
         playSound(sounds.buttonClick, 0.8);
+        _foodPngCounter = -1;
         // pause game by switching state so main loop doesn't process 'play' block
         const previousState = state;
         state = "prize"; // custom paused state
-
         // show email popup
         (function showEmailPopup(onDone){
           const dlg = document.createElement("div");
