@@ -414,29 +414,28 @@ if (it.type === "food") {
   const src = it.img?.src ?? "";
   const isFoodPng = src.endsWith("food.png");
 
-  // if this is the exact food.png, increment collected counter
-  if (isFoodPng) {
-    _foodPngCounter++;
+    if (isFoodPng) {
+    if (_foodPngCounter >= 0) {
+      _foodPngCounter++;
 
-    // if reached prize trigger
-    if (_foodPngCounter >= PRIZE_FREQUENCY) {
-      _foodPngCounter = 0;
-
-      // spawn the prize now
-      const pw = Math.max(28, Math.round(canvas.width * 0.08));
-      const ph = pw;
-      items.push({
-        type: "prize",
-        x: canvas.width,
-        y: Math.random() * (canvas.height - ph),
-        width: pw,
-        height: ph,
-        img: prizeImg,
-        speed: scrollSpeed + 2 + level * 0.5
-      });
+      if (_foodPngCounter >= PRIZE_FREQUENCY) {
+        if (_foodPngCounter === PRIZE_FREQUENCY) {  // spawn only once
+          const pw = Math.max(28, Math.round(canvas.width * 0.08));
+          const ph = pw;
+          items.push({
+            type: "prize",
+            x: canvas.width,
+            y: Math.random() * (canvas.height - ph),
+            width: pw,
+            height: ph,
+            img: prizeImg,
+            speed: scrollSpeed + 2 + level * 0.5
+          });
+        }
+        _foodPngCounter = -1;  // prevent further spawns
+      }
     }
   }
-
   score += 50;
   playSound(sounds.eat, 0.7);
 } else {
