@@ -440,6 +440,7 @@ if (it.type === "food") {
           });
         }
       }
+    }
   score += 50;
   playSound(sounds.eat, 0.7);
 } else {
