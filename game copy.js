@@ -14,6 +14,7 @@
   const MAX_HIGH_SCORES = 10;
   const PRIZE_FREQUENCY = 1;
   let _foodPngCounter = 0;
+  let prizeAlreadySpawned = false;
   const prizeImg = new Image();
   const bgImage = new Image();
   const heartImg = new Image();
@@ -137,6 +138,7 @@
     drawGameOver._didHS = false;
     levelBanner = null; 
     _foodPngCounter = 0;
+    prizeAlreadySpawned = false;
   }
 
   function drawIntroScreen() {
@@ -422,22 +424,22 @@ if (it.type === "food") {
 
       if (_foodPngCounter >= PRIZE_FREQUENCY) {
         _foodPngCounter = -1;
-
-        // spawn the prize now
-      const pw = Math.max(28, Math.round(canvas.width * 0.08));
-      const ph = pw;
-      items.push({
-        type: "prize",
-        x: canvas.width,
-        y: Math.random() * (canvas.height - ph),
-        width: pw,
-        height: ph,
-        img: prizeImg,
-        speed: scrollSpeed + 2 + level * 0.5
-      });
-    }
-  }
-
+        if (!prizeAlreadySpawned) {
+          prizeAlreadySpawned = true;
+          // spawn the prize now
+          const pw = Math.max(28, Math.round(canvas.width * 0.08));
+          const ph = pw;
+          items.push({
+            type: "prize",
+            x: canvas.width,
+            y: Math.random() * (canvas.height - ph),
+            width: pw,
+            height: ph,
+            img: prizeImg,
+            speed: scrollSpeed + 2 + level * 0.5
+          });
+        }
+      }
   score += 50;
   playSound(sounds.eat, 0.7);
 } else {
