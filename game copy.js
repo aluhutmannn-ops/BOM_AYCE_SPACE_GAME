@@ -14,7 +14,6 @@
   const MAX_HIGH_SCORES = 10;
   const PRIZE_FREQUENCY = 1;
   let _foodPngCounter = 0;
-  let prizeAlreadySpawned = false;
   const prizeImg = new Image();
   const bgImage = new Image();
   const heartImg = new Image();
@@ -137,8 +136,6 @@
     // reset HS prompt flag 
     drawGameOver._didHS = false;
     levelBanner = null; 
-    _foodPngCounter = 0;
-    prizeAlreadySpawned = false;
   }
 
   function drawIntroScreen() {
@@ -418,15 +415,16 @@ if (it.type === "food") {
   const isFoodPng = src.endsWith("food.png");
 
   // if this is the exact food.png, increment collected counter
-  if (isFoodPng && _foodPngCounter >= 0) {
+  if (isFoodPng) {
     _foodPngCounter++;
 
-    if (_foodPngCounter >= PRIZE_FREQUENCY && !prizeAlreadySpawned) {
-      prizeAlreadySpawned = true;
+    // if reached prize trigger
+    if (_foodPngCounter >= PRIZE_FREQUENCY) {
+      _foodPngCounter = 0;
 
+      // spawn the prize now
       const pw = Math.max(28, Math.round(canvas.width * 0.08));
       const ph = pw;
-
       items.push({
         type: "prize",
         x: canvas.width,
@@ -439,17 +437,19 @@ if (it.type === "food") {
     }
   }
 
-  // normal food score
   score += 50;
   playSound(sounds.eat, 0.7);
-
 } else {
   // drink
   score += 20;
   playSound(sounds.drink, 0.7);
 }
 
-items.splice(i, 1);
+items.splice(i,1);
+
+    }
+  }
+}
 
   function drawItems(){
     for(const it of items) ctx.drawImage(it.img,it.x,it.y,it.width,it.height);
