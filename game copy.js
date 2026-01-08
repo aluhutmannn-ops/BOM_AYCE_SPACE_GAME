@@ -418,42 +418,38 @@ if (it.type === "food") {
   const isFoodPng = src.endsWith("food.png");
 
   // if this is the exact food.png, increment collected counter
-  if (isFoodPng) {
-    if (_foodPngCounter >= 0) {
-      _foodPngCounter++;
+  if (isFoodPng && _foodPngCounter >= 0) {
+    _foodPngCounter++;
 
-      if (_foodPngCounter >= PRIZE_FREQUENCY) {
-        _foodPngCounter = -1;
-        if (!prizeAlreadySpawned) {
-          prizeAlreadySpawned = true;
-          // spawn the prize now
-          const pw = Math.max(28, Math.round(canvas.width * 0.08));
-          const ph = pw;
-          items.push({
-            type: "prize",
-            x: canvas.width,
-            y: Math.random() * (canvas.height - ph),
-            width: pw,
-            height: ph,
-            img: prizeImg,
-            speed: scrollSpeed + 2 + level * 0.5
-          });
-        }
-      }
+    if (_foodPngCounter >= PRIZE_FREQUENCY && !prizeAlreadySpawned) {
+      prizeAlreadySpawned = true;
+
+      const pw = Math.max(28, Math.round(canvas.width * 0.08));
+      const ph = pw;
+
+      items.push({
+        type: "prize",
+        x: canvas.width,
+        y: Math.random() * (canvas.height - ph),
+        width: pw,
+        height: ph,
+        img: prizeImg,
+        speed: scrollSpeed + 2 + level * 0.5
+      });
     }
+  }
+
+  // normal food score
   score += 50;
   playSound(sounds.eat, 0.7);
+
 } else {
   // drink
   score += 20;
   playSound(sounds.drink, 0.7);
 }
 
-items.splice(i,1);
-
-    }
-  }
-}
+items.splice(i, 1);
 
   function drawItems(){
     for(const it of items) ctx.drawImage(it.img,it.x,it.y,it.width,it.height);
