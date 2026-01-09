@@ -128,6 +128,7 @@
     explosion.timer = 0;
     explosion.x = 0;
     explosion.y = 0;
+    _foodPngCounter = 0;
     player.dead = false;
     player.flashTimer = 0; 
     player.flashCount = 0; 
